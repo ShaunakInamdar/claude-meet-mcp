@@ -50,11 +50,20 @@ def get_calendar_client() -> CalendarClient:
     return _calendar_client
 
 
-# Tool definitions
-TOOLS = [
+# Get configured timezone for tool descriptions
+def _get_configured_timezone() -> str:
+    """Get the configured timezone from environment."""
+    return os.getenv('TIMEZONE', 'Europe/Berlin')
+
+
+def get_tools() -> list[Tool]:
+    """Generate tool definitions with current timezone context."""
+    tz = _get_configured_timezone()
+
+    return [
     Tool(
         name="check_calendar_availability",
-        description="Check the free/busy status of one or more people's calendars for a specific date and time range. Returns when people are busy and when they're free.",
+        description=f"Check the free/busy status of one or more people's calendars for a specific date and time range. Returns when people are busy and when they're free. All times are in {tz} timezone.",
         inputSchema={
             "type": "object",
             "properties": {
@@ -81,7 +90,7 @@ TOOLS = [
     ),
     Tool(
         name="find_meeting_times",
-        description="Find available meeting time slots that work for all attendees. Analyzes calendars and returns the best options ranked by preference.",
+        description=f"Find available meeting time slots that work for all attendees. Analyzes calendars and returns the best options ranked by preference. Returns ISO timestamps with correct {tz} timezone offset - use these exact values when creating events.",
         inputSchema={
             "type": "object",
             "properties": {
@@ -114,7 +123,7 @@ TOOLS = [
     ),
     Tool(
         name="create_calendar_event",
-        description="Create a new calendar event and send email invitations to all attendees. The event will appear on everyone's calendar.",
+        description=f"Create a new calendar event and send email invitations to all attendees. The event will appear on everyone's calendar. Calendar is configured for {tz} timezone.",
         inputSchema={
             "type": "object",
             "properties": {
@@ -124,11 +133,11 @@ TOOLS = [
                 },
                 "start_time": {
                     "type": "string",
-                    "description": "Meeting start time in ISO 8601 format with timezone (e.g., '2026-01-20T14:00:00-08:00')"
+                    "description": "Meeting start time in ISO 8601 format with timezone. IMPORTANT: Use the exact 'start' value from find_meeting_times results - do not construct your own time string."
                 },
                 "end_time": {
                     "type": "string",
-                    "description": "Meeting end time in ISO 8601 format with timezone (e.g., '2026-01-20T15:00:00-08:00')"
+                    "description": "Meeting end time in ISO 8601 format with timezone. IMPORTANT: Use the exact 'end' value from find_meeting_times results - do not construct your own time string."
                 },
                 "attendees": {
                     "type": "array",
@@ -148,13 +157,13 @@ TOOLS = [
             "required": ["summary", "start_time", "end_time", "attendees"]
         }
     )
-]
+    ]
 
 
 @server.list_tools()
 async def list_tools() -> list[Tool]:
     """Return the list of available tools."""
-    return TOOLS
+    return get_tools()
 
 
 @server.call_tool()

@@ -24,7 +24,7 @@ class CalendarClient:
     - Find available meeting time slots
     """
 
-    def __init__(self, service, timezone: str = 'America/Los_Angeles'):
+    def __init__(self, service, timezone: str = 'Europe/Berlin'):
         """
         Initialize the calendar client.
 

@@ -149,7 +149,7 @@ class ClaudeClient:
     - Extracting final responses
     """
 
-    def __init__(self, api_key: str, calendar_client, timezone: str = 'America/Los_Angeles'):
+    def __init__(self, api_key: str, calendar_client, timezone: str = 'Europe/Berlin'):
         """
         Initialize the Claude client.
 

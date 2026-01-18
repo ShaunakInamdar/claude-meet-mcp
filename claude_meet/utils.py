@@ -15,7 +15,7 @@ from dateutil.relativedelta import relativedelta
 
 def parse_relative_date(
     date_str: str,
-    timezone: str = 'America/Los_Angeles'
+    timezone: str = 'Europe/Berlin'
 ) -> Optional[str]:
     """
     Parse relative dates like 'tomorrow', 'next week', 'friday' to YYYY-MM-DD.
@@ -116,7 +116,7 @@ def parse_relative_date(
 
 def format_datetime_for_display(
     dt_str: str,
-    timezone: str = 'America/Los_Angeles',
+    timezone: str = 'Europe/Berlin',
     include_date: bool = True
 ) -> str:
     """
@@ -150,7 +150,7 @@ def format_datetime_for_display(
 def create_iso_datetime(
     date_str: str,
     time_str: str,
-    timezone: str = 'America/Los_Angeles'
+    timezone: str = 'Europe/Berlin'
 ) -> str:
     """
     Create ISO format datetime from date and time strings.
@@ -215,7 +215,7 @@ def parse_time_string(time_str: str) -> Optional[str]:
 
 def get_timezone_offset(
     date_str: str,
-    timezone: str = 'America/Los_Angeles'
+    timezone: str = 'Europe/Berlin'
 ) -> str:
     """
     Get the timezone offset for a specific date.

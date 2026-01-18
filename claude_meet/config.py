@@ -28,7 +28,7 @@ class Config:
         self.credentials_path = self.config_dir / 'credentials.json'
 
         # Timezone
-        self.default_timezone = os.getenv('TIMEZONE', 'America/Los_Angeles')
+        self.default_timezone = os.getenv('TIMEZONE', 'Europe/Berlin')
 
         # Business hours
         self.business_hours_start = int(os.getenv('BUSINESS_HOURS_START', '9'))

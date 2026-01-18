@@ -250,7 +250,7 @@ def score_time_slot(
 
 def format_time_slot(
     slot: dict,
-    timezone: str = 'America/Los_Angeles'
+    timezone: str = 'Europe/Berlin'
 ) -> str:
     """
     Format a time slot for human-readable display.
@@ -278,7 +278,7 @@ def format_time_slot(
 
 def format_slots_as_options(
     slots: list,
-    timezone: str = 'America/Los_Angeles',
+    timezone: str = 'Europe/Berlin',
     max_options: int = 5
 ) -> str:
     """
