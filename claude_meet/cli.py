@@ -20,7 +20,7 @@ from dotenv import load_dotenv
 from .auth import get_calendar_service, clear_credentials
 from .calendar_client import CalendarClient
 from .claude_client import ClaudeClient
-from .config import Config
+from .config import Config, detect_system_timezone, save_timezone, get_common_timezones, get_env_file_path
 
 
 def get_api_key() -> str:
@@ -85,8 +85,17 @@ def chat(debug):
     """
     load_dotenv()
 
+    # Also load from user config directory
+    user_env = get_env_file_path()
+    if user_env.exists():
+        from dotenv import load_dotenv as ld
+        ld(user_env, override=True)
+
+    config = Config()
+
     click.echo("=" * 60)
     click.echo("  Claude Calendar Scheduler")
+    click.echo(f"  Timezone: {click.style(config.default_timezone, fg='yellow')}")
     click.echo("  Type 'exit', 'quit', or 'q' to end the session")
     click.echo("  Type 'help' for usage examples")
     click.echo("=" * 60)
@@ -110,7 +119,6 @@ def chat(debug):
 
     # Get API key and initialize clients
     api_key = get_api_key()
-    config = Config()
 
     calendar_client = CalendarClient(calendar_service, timezone=config.default_timezone)
     claude_client = ClaudeClient(api_key, calendar_client, timezone=config.default_timezone)
@@ -179,6 +187,12 @@ def schedule(message, debug):
     """
     load_dotenv()
 
+    # Also load from user config directory
+    user_env = get_env_file_path()
+    if user_env.exists():
+        from dotenv import load_dotenv as ld
+        ld(user_env, override=True)
+
     message_text = ' '.join(message)
 
     try:
@@ -238,12 +252,154 @@ def logout():
 
 
 @cli.command()
+@click.option('--timezone', '-tz', help='Set timezone directly (e.g., Europe/Berlin)')
+def setup(timezone):
+    """
+    Configure Claude Calendar Scheduler settings.
+
+    Interactively set your timezone and other preferences.
+    Your settings are saved to ~/.claude-meet/.env
+    """
+    click.echo()
+    click.echo(click.style("Claude Calendar Scheduler - Setup", fg='cyan', bold=True))
+    click.echo("=" * 45)
+    click.echo()
+
+    # Timezone configuration
+    if timezone:
+        # Validate the provided timezone
+        try:
+            import pytz
+            pytz.timezone(timezone)
+            env_path = save_timezone(timezone)
+            click.echo(click.style(f"Timezone set to: {timezone}", fg='green'))
+            click.echo(f"Saved to: {env_path}")
+        except Exception as e:
+            click.echo(click.style(f"Invalid timezone: {timezone}", fg='red'), err=True)
+            click.echo("Use 'claude-meet setup' without arguments to see available options.")
+            return
+    else:
+        # Interactive timezone selection
+        detected_tz = detect_system_timezone()
+        click.echo(f"Detected system timezone: {click.style(detected_tz, fg='yellow')}")
+        click.echo()
+
+        # Ask if they want to use detected timezone
+        use_detected = click.confirm(
+            f"Use {detected_tz} as your timezone?",
+            default=True
+        )
+
+        if use_detected:
+            selected_tz = detected_tz
+        else:
+            click.echo()
+            click.echo("Common timezones:")
+            click.echo("-" * 30)
+
+            timezones = get_common_timezones()
+            # Group by region
+            regions = {}
+            for tz in timezones:
+                region = tz.split('/')[0]
+                if region not in regions:
+                    regions[region] = []
+                regions[region].append(tz)
+
+            # Display grouped
+            idx = 1
+            tz_map = {}
+            for region in ['Europe', 'America', 'Asia', 'Australia', 'Pacific', 'UTC']:
+                if region in regions or region == 'UTC':
+                    click.echo(click.style(f"\n  {region}:", fg='cyan'))
+                    tzs = regions.get(region, ['UTC'])
+                    for tz in tzs:
+                        city = tz.split('/')[-1].replace('_', ' ') if '/' in tz else tz
+                        click.echo(f"    {idx:2}. {city:<20} ({tz})")
+                        tz_map[idx] = tz
+                        idx += 1
+
+            click.echo()
+            click.echo(f"    {idx}. Enter custom timezone")
+            click.echo()
+
+            choice = click.prompt(
+                "Select timezone",
+                type=int,
+                default=1
+            )
+
+            if choice == idx:
+                # Custom timezone
+                selected_tz = click.prompt("Enter timezone (e.g., Europe/Berlin)")
+                try:
+                    import pytz
+                    pytz.timezone(selected_tz)
+                except Exception:
+                    click.echo(click.style(f"Invalid timezone: {selected_tz}", fg='red'))
+                    return
+            elif choice in tz_map:
+                selected_tz = tz_map[choice]
+            else:
+                click.echo(click.style("Invalid selection", fg='red'))
+                return
+
+        # Save the timezone
+        env_path = save_timezone(selected_tz)
+        click.echo()
+        click.echo(click.style(f"Timezone set to: {selected_tz}", fg='green', bold=True))
+        click.echo(f"Configuration saved to: {env_path}")
+
+    click.echo()
+    click.echo("Setup complete! You can now use 'claude-meet chat' to start scheduling.")
+    click.echo()
+    click.echo("Tip: Run 'claude-meet config' to view your current settings.")
+
+
+@cli.command()
+def config():
+    """
+    Show current configuration settings.
+    """
+    load_dotenv()
+
+    # Also load from user config directory
+    user_env = get_env_file_path()
+    if user_env.exists():
+        from dotenv import load_dotenv as ld
+        ld(user_env)
+
+    cfg = Config()
+
+    click.echo()
+    click.echo(click.style("Current Configuration", fg='cyan', bold=True))
+    click.echo("=" * 40)
+    click.echo()
+    click.echo(f"  Timezone:        {click.style(cfg.default_timezone, fg='yellow')}")
+    click.echo(f"  Business hours:  {cfg.business_hours_start}:00 - {cfg.business_hours_end}:00")
+    click.echo(f"  Default meeting: {cfg.default_duration} minutes")
+    click.echo(f"  Prefer morning:  {cfg.prefer_morning}")
+    click.echo()
+    click.echo(f"  Config file:     {get_env_file_path()}")
+    click.echo()
+    click.echo("To change timezone: claude-meet setup")
+    click.echo("To change timezone directly: claude-meet setup --timezone Europe/London")
+    click.echo()
+
+
+@cli.command()
 @click.option('--count', '-n', default=10, help='Number of events to show')
 def upcoming(count):
     """
     Show upcoming calendar events.
     """
     load_dotenv()
+
+    # Also load from user config directory
+    user_env = get_env_file_path()
+    if user_env.exists():
+        from dotenv import load_dotenv as ld
+        ld(user_env, override=True)
 
     try:
         calendar_service = get_calendar_service()

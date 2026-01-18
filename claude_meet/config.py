@@ -5,8 +5,52 @@ Handles application settings, paths, and user preferences.
 """
 
 import os
+import sys
 from pathlib import Path
 from typing import Optional
+
+
+def detect_system_timezone() -> str:
+    """
+    Auto-detect the system's timezone.
+
+    Returns:
+        str: Timezone string like 'Europe/Berlin' or 'America/New_York'
+    """
+    try:
+        # Python 3.9+ has zoneinfo
+        if sys.version_info >= (3, 9):
+            from zoneinfo import ZoneInfo
+            from datetime import datetime
+            # Get local timezone name
+            local_tz = datetime.now().astimezone().tzinfo
+            if hasattr(local_tz, 'key'):
+                return local_tz.key
+
+        # Try tzlocal library (cross-platform)
+        try:
+            from tzlocal import get_localzone
+            local_tz = get_localzone()
+            if hasattr(local_tz, 'key'):
+                return local_tz.key
+            return str(local_tz)
+        except ImportError:
+            pass
+
+        # Fallback: try reading system timezone on Unix-like systems
+        if os.path.exists('/etc/timezone'):
+            with open('/etc/timezone', 'r') as f:
+                return f.read().strip()
+
+        # Fallback: try TZ environment variable
+        if os.getenv('TZ'):
+            return os.getenv('TZ')
+
+    except Exception:
+        pass
+
+    # Ultimate fallback
+    return 'UTC'
 
 
 class Config:
@@ -27,8 +71,8 @@ class Config:
         self.token_path = self.config_dir / 'token.json'
         self.credentials_path = self.config_dir / 'credentials.json'
 
-        # Timezone
-        self.default_timezone = os.getenv('TIMEZONE', 'Europe/Berlin')
+        # Timezone - check env, then .env file, then auto-detect
+        self.default_timezone = os.getenv('TIMEZONE') or detect_system_timezone()
 
         # Business hours
         self.business_hours_start = int(os.getenv('BUSINESS_HOURS_START', '9'))
@@ -126,6 +170,95 @@ def load_api_key_from_file(filename: str = 'anthropic_apikey.txt') -> Optional[s
         return key_file.read_text().strip()
 
     return None
+
+
+def get_env_file_path() -> Path:
+    """
+    Get the path to the .env file in user's config directory.
+
+    Returns:
+        Path: Path to ~/.claude-meet/.env
+    """
+    return Path.home() / '.claude-meet' / '.env'
+
+
+def save_timezone(timezone: str) -> Path:
+    """
+    Save timezone to the user's .env file.
+
+    Creates or updates the TIMEZONE setting in ~/.claude-meet/.env
+
+    Args:
+        timezone: Timezone string like 'Europe/Berlin'
+
+    Returns:
+        Path: Path to the saved .env file
+    """
+    env_path = get_env_file_path()
+    env_path.parent.mkdir(exist_ok=True)
+
+    # Read existing content if file exists
+    existing_lines = []
+    timezone_found = False
+
+    if env_path.exists():
+        with open(env_path, 'r') as f:
+            for line in f:
+                if line.strip().startswith('TIMEZONE='):
+                    existing_lines.append(f'TIMEZONE={timezone}\n')
+                    timezone_found = True
+                else:
+                    existing_lines.append(line)
+
+    if not timezone_found:
+        existing_lines.append(f'TIMEZONE={timezone}\n')
+
+    # Write back
+    with open(env_path, 'w') as f:
+        f.writelines(existing_lines)
+
+    return env_path
+
+
+def get_common_timezones() -> list:
+    """
+    Get a list of common timezones for user selection.
+
+    Returns:
+        list: List of timezone strings
+    """
+    return [
+        'Europe/London',
+        'Europe/Berlin',
+        'Europe/Paris',
+        'Europe/Amsterdam',
+        'Europe/Rome',
+        'Europe/Madrid',
+        'Europe/Zurich',
+        'Europe/Vienna',
+        'Europe/Stockholm',
+        'Europe/Warsaw',
+        'Europe/Moscow',
+        'America/New_York',
+        'America/Chicago',
+        'America/Denver',
+        'America/Los_Angeles',
+        'America/Toronto',
+        'America/Vancouver',
+        'America/Mexico_City',
+        'America/Sao_Paulo',
+        'Asia/Tokyo',
+        'Asia/Shanghai',
+        'Asia/Hong_Kong',
+        'Asia/Singapore',
+        'Asia/Dubai',
+        'Asia/Kolkata',
+        'Asia/Seoul',
+        'Australia/Sydney',
+        'Australia/Melbourne',
+        'Pacific/Auckland',
+        'UTC',
+    ]
 
 
 def get_google_credentials_path() -> Optional[Path]:

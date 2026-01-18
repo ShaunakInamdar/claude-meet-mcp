@@ -25,13 +25,18 @@ from mcp.server import Server
 from mcp.server.stdio import stdio_server
 from mcp.types import Tool, TextContent
 
-# Load environment variables
+# Load environment variables (project .env first, then user config)
 load_dotenv()
 
 # Import calendar components
 from .auth import get_calendar_service
 from .calendar_client import CalendarClient
-from .config import Config
+from .config import Config, get_env_file_path
+
+# Load user config (overrides project .env)
+user_env = get_env_file_path()
+if user_env.exists():
+    load_dotenv(user_env, override=True)
 
 # Create the MCP server
 server = Server("claude-meet")
@@ -52,8 +57,9 @@ def get_calendar_client() -> CalendarClient:
 
 # Get configured timezone for tool descriptions
 def _get_configured_timezone() -> str:
-    """Get the configured timezone from environment."""
-    return os.getenv('TIMEZONE', 'Europe/Berlin')
+    """Get the configured timezone from environment or auto-detect."""
+    from .config import detect_system_timezone
+    return os.getenv('TIMEZONE') or detect_system_timezone()
 
 
 def get_tools() -> list[Tool]:
