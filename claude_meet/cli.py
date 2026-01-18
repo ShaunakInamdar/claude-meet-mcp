@@ -54,16 +54,31 @@ def get_api_key() -> str:
     sys.exit(1)
 
 
-@click.group()
+@click.group(invoke_without_command=True)
 @click.version_option(version='1.0.0', prog_name='claude-meet')
-def cli():
+@click.pass_context
+def cli(ctx):
     """
     Claude Calendar Scheduler - Intelligent meeting scheduling from your terminal.
 
     Use natural language to schedule meetings, check availability,
     and manage your calendar through Claude AI.
+
+    \b
+    Quick Start:
+      1. claude-meet setup     Configure your timezone
+      2. claude-meet auth      Connect to Google Calendar
+      3. claude-meet chat      Start scheduling!
+
+    \b
+    Examples:
+      claude-meet chat
+      claude-meet setup --timezone Europe/Berlin
+      claude-meet config
     """
-    pass
+    # If no command provided, show help
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
 
 
 @cli.command()
@@ -93,12 +108,32 @@ def chat(debug):
 
     config = Config()
 
+    # Check if this is first run (no user config exists)
+    is_first_run = not user_env.exists() and not os.getenv('TIMEZONE')
+
     click.echo("=" * 60)
     click.echo("  Claude Calendar Scheduler")
-    click.echo(f"  Timezone: {click.style(config.default_timezone, fg='yellow')}")
-    click.echo("  Type 'exit', 'quit', or 'q' to end the session")
-    click.echo("  Type 'help' for usage examples")
+    click.echo(f"  Timezone: {click.style(config.default_timezone, fg='yellow')}", nl=False)
+    if is_first_run:
+        click.echo(click.style(" (auto-detected)", fg='cyan'))
+    else:
+        click.echo()
+    click.echo("  Type 'help' for commands, 'exit' to quit")
     click.echo("=" * 60)
+
+    # First-run prompt
+    if is_first_run:
+        click.echo()
+        click.echo(click.style("First time setup:", fg='cyan', bold=True))
+        click.echo(f"  Your timezone was auto-detected as {config.default_timezone}")
+        if not click.confirm("  Is this correct?", default=True):
+            click.echo("\n  Run 'claude-meet setup' to configure your timezone.")
+            click.echo("  Then run 'claude-meet chat' again.\n")
+            return
+        # Save the detected timezone so we don't ask again
+        save_timezone(config.default_timezone)
+        click.echo(click.style("  Timezone saved!\n", fg='green'))
+
     click.echo()
 
     # Initialize services
@@ -128,28 +163,41 @@ def chat(debug):
 
     while True:
         try:
-            # Get user input
-            user_input = click.prompt(click.style("You", fg='green', bold=True), type=str)
+            # Get user input (allow empty with default)
+            user_input = click.prompt(
+                click.style("You", fg='green', bold=True),
+                type=str,
+                default='',
+                show_default=False
+            )
+
+            # Skip empty input silently
+            if not user_input or not user_input.strip():
+                continue
+
+            user_input = user_input.strip()
 
             # Check for exit commands
-            if user_input.lower().strip() in ['exit', 'quit', 'q']:
+            if user_input.lower() in ['exit', 'quit', 'q']:
                 click.echo("\nGoodbye! Have a productive day!")
                 break
 
             # Check for help command
-            if user_input.lower().strip() == 'help':
+            if user_input.lower() == 'help':
                 _show_help()
                 continue
 
             # Check for clear command
-            if user_input.lower().strip() == 'clear':
+            if user_input.lower() == 'clear':
                 conversation_history = []
                 click.clear()
                 click.echo("Conversation cleared.\n")
                 continue
 
-            # Skip empty input
-            if not user_input.strip():
+            # Check for config/settings command
+            if user_input.lower() in ['config', 'settings', 'timezone']:
+                click.echo(f"\nCurrent timezone: {click.style(config.default_timezone, fg='yellow')}")
+                click.echo("To change: exit and run 'claude-meet setup'\n")
                 continue
 
             # Process the message through Claude
@@ -433,9 +481,10 @@ def _show_help():
 ║                    Claude Calendar Scheduler                  ║
 ╠══════════════════════════════════════════════════════════════╣
 ║  Commands:                                                    ║
-║    help  - Show this help message                            ║
-║    clear - Clear conversation history                        ║
-║    exit  - Exit the application                              ║
+║    help     - Show this help message                         ║
+║    clear    - Clear conversation history                     ║
+║    timezone - Show current timezone                          ║
+║    exit     - Exit the application (or 'quit', 'q')          ║
 ╠══════════════════════════════════════════════════════════════╣
 ║  Example Requests:                                            ║
 ║                                                               ║
