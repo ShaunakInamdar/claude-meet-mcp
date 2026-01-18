@@ -1,0 +1,39 @@
+# Credentials and secrets
+config/
+.env
+token.json
+credentials.json
+
+# Internal development documents
+documents/
+
+# Claude Code configuration
+.claude/
+
+# Local config files
+claude_desktop_config.json
+test_mcp.py
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+*.log

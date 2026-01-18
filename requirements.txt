@@ -1,0 +1,9 @@
+anthropic>=0.40.0
+google-api-python-client>=2.100.0
+google-auth-httplib2>=0.1.1
+google-auth-oauthlib>=1.1.0
+click>=8.1.7
+python-dateutil>=2.8.2
+pytz>=2023.3
+python-dotenv>=1.0.0
+mcp>=1.0.0
