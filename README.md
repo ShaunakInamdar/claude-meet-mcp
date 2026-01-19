@@ -27,7 +27,7 @@
 
 ---
 
-[Quick Start](#-quick-start-60-seconds) | [Demo](#-see-it-in-action) | [Features](#-features) | [Documentation](docs/)
+[Quick Start](#quick-start-60-seconds) | [Demo](#see-it-in-action) | [Features](#features) | [Documentation](docs/)
 
 ---
 
