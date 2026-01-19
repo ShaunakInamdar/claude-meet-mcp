@@ -11,8 +11,10 @@ from pathlib import Path
 
 # Fix Windows console encoding for Unicode
 if sys.platform == 'win32':
-    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
-    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+    if hasattr(sys.stdout, 'reconfigure'):
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    if hasattr(sys.stderr, 'reconfigure'):
+        sys.stderr.reconfigure(encoding='utf-8', errors='replace')
 
 import click
 from dotenv import load_dotenv
@@ -464,7 +466,7 @@ def config_show():
     try:
         key = get_api_key()
         api_key_status = click.style(f"{key[:8]}...{key[-4:]}", fg='green')
-    except:
+    except Exception:
         pass
     click.echo(f"  Anthropic API:   {api_key_status}")
 
