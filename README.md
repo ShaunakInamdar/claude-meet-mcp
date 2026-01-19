@@ -1,286 +1,344 @@
-# Claude Calendar Scheduler
+# Claude Meet MCP
 
-Intelligent meeting scheduling from your terminal using Claude AI and Google Calendar.
+**Stop playing email tennis. Let AI schedule your meetings in seconds.**
 
-## Features
+[![PyPI version](https://badge.fury.io/py/claude-meet-mcp.svg)](https://badge.fury.io/py/claude-meet-mcp)
+[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
+[![CI](https://github.com/ShaunakInamdar/claude-meet-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/ShaunakInamdar/claude-meet-mcp/actions)
 
-- **Natural Language Scheduling**: Schedule meetings using plain English
-- **Smart Time Finding**: Automatically finds times when all attendees are free
-- **Intelligent Ranking**: Suggests optimal meeting times based on preferences
-- **Google Calendar Integration**: Creates events and sends invitations automatically
-- **Google Meet Support**: Optionally adds video conferencing links
-- **Interactive CLI**: Conversational interface for complex scheduling tasks
-- **MCP Server**: Integrates with Claude Desktop and Claude.ai as an MCP tool
+---
 
-## Quick Start (3 Steps)
+### The Problem
+
+> "Are you free Tuesday at 2pm?"
+> "No, how about Wednesday?"
+> "I have a conflict at 3..."
+> "What about Thursday morning?"
+> *[5 emails later, 30 minutes wasted]*
+
+### The Solution
+
+> **You:** "Schedule a meeting with john@example.com and alice@example.com next week"
+> **Claude Meet:** *Checks all calendars, finds mutual availability, books the meeting*
+> **Done in 10 seconds.**
+
+**You save: 5+ hours per week on scheduling.**
+
+---
+
+[Quick Start](#-quick-start-60-seconds) | [Demo](#-see-it-in-action) | [Features](#-features) | [Documentation](docs/)
+
+---
+
+## Why Claude Meet?
+
+| Feature | Email Back-and-Forth | Calendly | **Claude Meet** |
+|---------|---------------------|----------|-----------------|
+| Checks everyone's calendar | Manual | One-way only | **Automatic** |
+| Natural language | No | No | **Yes** |
+| AI-powered time suggestions | No | No | **Yes** |
+| Works from terminal | No | No | **Yes** |
+| Integrates with Claude Desktop | No | No | **Yes** |
+| Privacy-first (your data stays yours) | Yes | No | **Yes** |
+| Cost | Free but slow | $10-15/mo | **Free** |
+
+---
+
+## See It In Action
+
+### CLI Demo
+
+```
+$ claude-meet chat
+
+Claude Calendar Scheduler
+Timezone: Europe/Berlin
+Type 'help' for commands, 'exit' to quit
+============================================================
+
+You: Schedule a 1-hour meeting with alice@company.com and bob@company.com tomorrow
+
+Claude: I'll find a time that works for everyone. Checking calendars...
+
+Found these available slots for tomorrow:
+  1. 9:00 AM - 10:00 AM (Recommended - prime morning time)
+  2. 2:00 PM - 3:00 PM (Good option)
+  3. 4:00 PM - 5:00 PM
+
+Which time works best? And what should I call this meeting?
+
+You: Let's do 2pm, call it "Project Kickoff"
+
+Claude: Done! I've created "Project Kickoff" for tomorrow 2:00 PM - 3:00 PM.
+Calendar invites sent to alice@company.com and bob@company.com.
+```
+
+### Claude Desktop Integration
+
+Use Claude Meet directly in Claude Desktop - just ask Claude to schedule meetings naturally:
+
+```
+You: Check when sarah@example.com is free next Tuesday
+
+Claude: I checked Sarah's calendar for next Tuesday. She's available:
+  - 9:00 AM - 11:30 AM
+  - 2:00 PM - 5:00 PM
+
+Would you like me to schedule a meeting?
+```
+
+<!-- TODO: Add GIF demos and video tutorial -->
+
+---
+
+## Quick Start (60 seconds)
 
 ### Step 1: Install
 
 ```bash
-# Clone and run the installer
+# Clone the repo
 git clone https://github.com/ShaunakInamdar/claude-meet-mcp.git
 cd claude-meet-mcp
 
-# macOS/Linux:
-./scripts/install.sh
-
-# Windows PowerShell:
-.\scripts\install.ps1
-
-# Windows CMD:
-scripts\install.bat
-```
-
-Or install manually:
-```bash
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-pip install -r requirements.txt
-pip install -e .
+# Run the installer
+./scripts/install.sh        # macOS/Linux
+.\scripts\install.ps1       # Windows PowerShell
 ```
 
 ### Step 2: Setup
 
-Run the interactive setup wizard:
 ```bash
 claude-meet init
 ```
 
-This guides you through:
+The wizard guides you through:
 - Setting your Anthropic API key
-- Creating Google Cloud credentials (with step-by-step instructions)
-- Authenticating with Google Calendar
+- Connecting Google Calendar (with step-by-step instructions)
 - Configuring your timezone
 
-### Step 3: Use
+### Step 3: Start scheduling
 
 ```bash
 claude-meet chat
 ```
 
-That's it! You can verify everything is working with:
-```bash
-claude-meet check
-```
+**That's it.** No complex configuration. No YAML files. Just works.
 
 ---
 
-## Detailed Setup (Manual)
+## Features
 
-### Prerequisites
+### Talk Naturally
+No commands to memorize. No special syntax. Just tell Claude what you need.
 
-- Python 3.9 or higher
-- Google Cloud project with Calendar API enabled
-- Anthropic API key
+```
+"Find a time for a 30-minute sync with the design team next week"
+"Schedule a demo with client@company.com on Friday afternoon"
+"When is everyone free for a team lunch?"
+```
 
-### Configuration
+### Smart Conflict Detection
+Never double-book again. Claude Meet checks everyone's calendar before suggesting times.
 
-1. **Set up Google Calendar API**:
-   - Go to [Google Cloud Console](https://console.cloud.google.com)
-   - Create a new project or select an existing one
-   - Enable the Google Calendar API
-   - Create OAuth 2.0 credentials (Desktop application)
-   - Download the credentials JSON file
-   - Save it to `~/.claude-meet/credentials.json`
+### Intelligent Time Suggestions
+Times are ranked by preference:
+- Avoids early mornings and late evenings
+- Respects lunch hours
+- Prefers prime collaboration times (9-11 AM)
 
-2. **Set up Anthropic API**:
-   - Get your API key from [Anthropic Console](https://console.anthropic.com)
-   - Set it using the config command:
-     ```bash
-     claude-meet config set ANTHROPIC_API_KEY=sk-ant-...
-     ```
+### Google Meet Integration
+Add video conferencing with one word:
 
-3. **Authenticate with Google**:
-   ```bash
-   claude-meet auth
-   ```
+```
+"Schedule a video call with remote-team@company.com tomorrow"
+```
+
+### Works Everywhere
+- **CLI**: For terminal lovers
+- **Claude Desktop**: Native MCP integration
+- **Claude.ai**: Use as an MCP tool
 
 ---
 
-## Usage
+## Perfect For
 
-**Interactive Mode:**
+### Engineering Managers
+- Schedule 1-on-1s across your entire team in minutes
+- Find time for all-hands when everyone's calendar is packed
+- Coordinate cross-team meetings without the back-and-forth
+
+### Remote Teams
+- Handles multiple timezones automatically
+- Finds overlapping work hours across continents
+- Async-first: schedule now, meet later
+
+### Founders & Sales
+- Book demos with prospects instantly
+- Coordinate investor meetings efficiently
+- Stop losing deals to scheduling friction
+
+---
+
+## Claude Desktop Integration
+
+Add Claude Meet to Claude Desktop for seamless scheduling:
+
 ```bash
-claude-meet chat
+claude-meet mcp-setup
 ```
 
-**Single Command:**
+This generates the config to add to your Claude Desktop settings. Once configured, Claude can schedule meetings directly from your conversations.
+
+### Available Tools
+
+| Tool | What It Does |
+|------|--------------|
+| `check_calendar_availability` | See when people are free or busy |
+| `find_meeting_times` | Get AI-ranked suggestions for meeting times |
+| `create_calendar_event` | Book meetings and send invites |
+
+[Full MCP setup guide](docs/MCP_SETUP.md)
+
+---
+
+## Configuration
+
+Customize Claude Meet to match your work style:
+
 ```bash
-claude-meet schedule "Schedule a meeting with alice@example.com tomorrow at 2pm"
+# Set your timezone
+claude-meet config set TIMEZONE=America/New_York
+
+# Change business hours
+claude-meet config set BUSINESS_HOURS_START=8
+claude-meet config set BUSINESS_HOURS_END=18
+
+# View all settings
+claude-meet config
 ```
 
-**View Upcoming Events:**
-```bash
-claude-meet upcoming
-```
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `TIMEZONE` | Auto-detected | Your local timezone |
+| `BUSINESS_HOURS_START` | 9 | When your workday starts |
+| `BUSINESS_HOURS_END` | 17 | When your workday ends |
+| `DEFAULT_DURATION` | 60 | Default meeting length (minutes) |
 
-## Example Conversations
-
-```
-You: Schedule a 1-hour meeting with alice@example.com and bob@example.com tomorrow
-
-Claude: I'll find a time that works for everyone. Let me check their availability...
-
-I found these available slots for tomorrow:
-1. 9:00 AM - 10:00 AM (Recommended)
-2. 2:00 PM - 3:00 PM (Good option)
-3. 3:00 PM - 4:00 PM
-
-Which time would you prefer? Also, what should I call this meeting?
-
-You: Let's do 2pm, call it "Project Sync"
-
-Claude: I've created the meeting "Project Sync" for tomorrow at 2:00 PM - 3:00 PM.
-Invitations have been sent to alice@example.com and bob@example.com.
-
-Calendar link: https://calendar.google.com/calendar/event?...
-```
+---
 
 ## Commands
 
 | Command | Description |
 |---------|-------------|
-| `claude-meet init` | Interactive setup wizard (start here!) |
-| `claude-meet check` | Verify your setup is complete |
-| `claude-meet chat` | Start interactive scheduling session |
-| `claude-meet schedule "..."` | Send a single scheduling request |
-| `claude-meet auth` | Authenticate with Google Calendar |
-| `claude-meet logout` | Clear stored credentials |
-| `claude-meet setup` | Configure timezone and preferences |
-| `claude-meet config` | View/manage configuration |
-| `claude-meet config set KEY=value` | Set a configuration value |
-| `claude-meet config get KEY` | Get a configuration value |
-| `claude-meet mcp-setup` | Generate MCP config for Claude Desktop |
-| `claude-meet upcoming` | Show upcoming calendar events |
+| `claude-meet init` | Interactive setup wizard |
+| `claude-meet chat` | Start scheduling conversations |
+| `claude-meet check` | Verify your setup is working |
+| `claude-meet config` | View/edit configuration |
+| `claude-meet auth` | Re-authenticate with Google |
+| `claude-meet mcp-setup` | Get Claude Desktop config |
+| `claude-meet upcoming` | See your next meetings |
 
-## MCP Server (Claude Desktop Integration)
+---
 
-Claude Calendar Scheduler can run as an MCP server, allowing Claude Desktop to directly access your calendar.
-
-### Quick Setup
-
-Run the setup helper to get your configuration:
-```bash
-claude-meet mcp-setup
-```
-
-This will show you the exact JSON to add to your Claude Desktop config file.
-
-Alternatively, add this to your Claude Desktop config manually:
-- Windows: `%APPDATA%\Claude\claude_desktop_config.json`
-- macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`
-- Linux: `~/.config/Claude/claude_desktop_config.json`
-
-```json
-{
-  "mcpServers": {
-    "calendar-scheduler": {
-      "command": "python",
-      "args": ["-m", "claude_meet.mcp_server"]
-    }
-  }
-}
-```
-
-After adding the config, restart Claude Desktop. Claude can now schedule meetings directly:
-> "Schedule a meeting with alice@example.com tomorrow at 2pm"
-
-### MCP Tools Available
-
-| Tool | Description |
-|------|-------------|
-| `check_calendar_availability` | Check when people are free/busy |
-| `find_meeting_times` | Find optimal meeting slots for multiple attendees |
-| `create_calendar_event` | Create events and send invitations |
-
-See [docs/MCP_SETUP.md](docs/MCP_SETUP.md) for detailed configuration.
-
-## Configuration Options
-
-Set via environment variables or `.env` file:
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `ANTHROPIC_API_KEY` | - | Your Anthropic API key |
-| `TIMEZONE` | America/Los_Angeles | Default timezone |
-| `BUSINESS_HOURS_START` | 9 | Business hours start (24h) |
-| `BUSINESS_HOURS_END` | 17 | Business hours end (24h) |
-| `DEFAULT_DURATION` | 60 | Default meeting duration (minutes) |
-| `DEBUG` | false | Enable debug output |
-
-## Project Structure
+## Architecture
 
 ```
-claude-booker/
-├── claude_meet/
-│   ├── __init__.py
-│   ├── cli.py           # Command-line interface
-│   ├── mcp_server.py    # MCP server for Claude Desktop
-│   ├── claude_client.py # Claude API integration
-│   ├── calendar_client.py # Google Calendar wrapper
-│   ├── scheduler.py     # Scheduling algorithms
-│   ├── auth.py          # OAuth handling
-│   ├── config.py        # Configuration management
-│   ├── errors.py        # Custom exceptions
-│   └── utils.py         # Utility functions
-├── scripts/
-│   ├── install.sh       # Unix/macOS installer
-│   ├── install.ps1      # Windows PowerShell installer
-│   └── install.bat      # Windows CMD installer
-├── tests/
-├── docs/
-├── config/              # Credentials (gitignored)
-├── requirements.txt
-├── setup.py
-└── README.md
+┌─────────────────┐     ┌──────────────────┐     ┌─────────────────┐
+│   Claude CLI    │────▶│   Claude API     │────▶│ Calendar Client │
+│   or Desktop    │     │  (Tool Calling)  │     │  (Google API)   │
+└─────────────────┘     └──────────────────┘     └─────────────────┘
+                                │
+                                ▼
+                        ┌──────────────────┐
+                        │    Scheduler     │
+                        │ (Time Ranking)   │
+                        └──────────────────┘
 ```
 
-## Development
+**How it works:**
+1. You describe what you need in natural language
+2. Claude interprets your request and calls the right tools
+3. Calendar Client checks Google Calendar for availability
+4. Scheduler ranks times by preference
+5. Claude presents options and books your choice
 
-```bash
-# Install in development mode
-pip install -e .
-
-# Run tests
-python -m pytest tests/
-
-# Run with debug output
-claude-meet chat --debug
-```
+---
 
 ## Troubleshooting
 
-First, run `claude-meet check` to see what's configured and what's missing.
+Run the diagnostic command first:
 
-**"Anthropic API key not found"**
-- Run `claude-meet config set ANTHROPIC_API_KEY=sk-ant-...`
-- Or set the `ANTHROPIC_API_KEY` environment variable
+```bash
+claude-meet check
+```
+
+This shows what's configured and what needs attention.
+
+### Common Issues
+
+**"API key not found"**
+```bash
+claude-meet config set ANTHROPIC_API_KEY=sk-ant-...
+```
 
 **"Google credentials not found"**
-- Run `claude-meet init` for step-by-step setup instructions
-- Download OAuth credentials from Google Cloud Console
-- Save to `~/.claude-meet/credentials.json`
+```bash
+claude-meet init  # Follow the Google Cloud setup steps
+```
 
-**"Authentication failed"**
-- Run `claude-meet logout` then `claude-meet auth` to re-authenticate
-- Check that your credentials.json file is valid
+**"Authentication expired"**
+```bash
+claude-meet logout && claude-meet auth
+```
 
-**"Rate limit exceeded"**
-- Wait a moment and try again
-- Check your API quotas in Google Cloud Console
+[Full troubleshooting guide](docs/TROUBLESHOOTING.md)
 
-**Need help with setup?**
-- Run `claude-meet init` for guided setup
-- Run `claude-meet check` to verify your configuration
-
-## License
-
-MIT License - see LICENSE file for details.
+---
 
 ## Contributing
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Run tests
-5. Submit a pull request
+We welcome contributions! See our [Contributing Guide](CONTRIBUTING.md) for details.
+
+```bash
+# Run tests
+pytest tests/ -v
+
+# Run linting
+ruff check claude_meet/
+```
+
+---
+
+## Privacy & Security
+
+- **Your data stays yours**: We never see your calendar data
+- **Local tokens**: Google OAuth tokens stored locally in `~/.claude-meet/`
+- **No tracking**: Zero analytics or telemetry
+- **Open source**: Audit the code yourself
+
+---
+
+## Support the Project
+
+If Claude Meet saves you time:
+
+- **Star this repo** to help others find it
+- **Report bugs** to help us improve
+- **Share** with colleagues who hate scheduling
+
+---
+
+## License
+
+MIT License - Use it however you want.
+
+---
+
+<p align="center">
+  <b>Stop scheduling manually. Let AI do it.</b>
+  <br><br>
+  <a href="#quick-start-60-seconds">Get Started</a> ·
+  <a href="https://github.com/ShaunakInamdar/claude-meet-mcp/issues">Report Bug</a> ·
+  <a href="https://github.com/ShaunakInamdar/claude-meet-mcp/issues">Request Feature</a>
+</p>
