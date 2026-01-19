@@ -285,3 +285,125 @@ def get_google_credentials_path() -> Optional[Path]:
             return client_secrets[0]
 
     return None
+
+
+# Valid configuration keys and their descriptions
+CONFIG_KEYS = {
+    'ANTHROPIC_API_KEY': 'Anthropic API key for Claude',
+    'TIMEZONE': 'Default timezone (e.g., Europe/Berlin)',
+    'BUSINESS_HOURS_START': 'Business hours start (0-23)',
+    'BUSINESS_HOURS_END': 'Business hours end (0-23)',
+    'DEFAULT_DURATION': 'Default meeting duration in minutes',
+    'MAX_SUGGESTIONS': 'Maximum number of time slot suggestions',
+    'PREFER_MORNING': 'Prefer morning meetings (true/false)',
+    'AVOID_LUNCH': 'Avoid scheduling over lunch (true/false)',
+    'CLAUDE_MODEL': 'Claude model to use',
+    'CLAUDE_MAX_TOKENS': 'Maximum tokens for Claude responses',
+    'DEBUG': 'Enable debug mode (true/false)',
+}
+
+
+def get_config_value(key: str) -> Optional[str]:
+    """
+    Get a configuration value.
+
+    Checks environment variables first, then the .env file.
+
+    Args:
+        key: The configuration key
+
+    Returns:
+        The value if found, None otherwise
+    """
+    # Check environment first
+    value = os.getenv(key)
+    if value:
+        return value
+
+    # Check .env file
+    env_path = get_env_file_path()
+    if env_path.exists():
+        with open(env_path, 'r') as f:
+            for line in f:
+                line = line.strip()
+                if line.startswith(f'{key}='):
+                    return line.split('=', 1)[1].strip()
+
+    return None
+
+
+def set_config_value(key: str, value: str) -> Path:
+    """
+    Set a configuration value in the .env file.
+
+    Args:
+        key: The configuration key
+        value: The value to set
+
+    Returns:
+        Path to the .env file
+    """
+    env_path = get_env_file_path()
+    env_path.parent.mkdir(exist_ok=True)
+
+    # Read existing content
+    existing_lines = []
+    key_found = False
+
+    if env_path.exists():
+        with open(env_path, 'r') as f:
+            for line in f:
+                if line.strip().startswith(f'{key}='):
+                    existing_lines.append(f'{key}={value}\n')
+                    key_found = True
+                else:
+                    existing_lines.append(line)
+
+    if not key_found:
+        existing_lines.append(f'{key}={value}\n')
+
+    # Write back
+    with open(env_path, 'w') as f:
+        f.writelines(existing_lines)
+
+    return env_path
+
+
+def list_all_config() -> dict:
+    """
+    Get all configuration values.
+
+    Returns:
+        dict: All configuration key-value pairs
+    """
+    from dotenv import load_dotenv
+
+    # Load environment files
+    load_dotenv()
+    env_path = get_env_file_path()
+    if env_path.exists():
+        load_dotenv(env_path, override=True)
+
+    result = {}
+    for key in CONFIG_KEYS:
+        value = os.getenv(key)
+        if value:
+            # Mask sensitive values
+            if 'KEY' in key or 'SECRET' in key:
+                if len(value) > 10:
+                    value = value[:8] + '...' + value[-4:]
+            result[key] = value
+
+    return result
+
+
+def validate_config_key(key: str) -> bool:
+    """Check if a configuration key is valid."""
+    return key in CONFIG_KEYS
+
+
+def get_config_dir() -> Path:
+    """Get the user configuration directory."""
+    config_dir = Path.home() / '.claude-meet'
+    config_dir.mkdir(exist_ok=True)
+    return config_dir
