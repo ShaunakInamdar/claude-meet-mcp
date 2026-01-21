@@ -5,6 +5,8 @@ Exposes calendar operations as MCP tools for integration with
 Claude Desktop and Claude.ai.
 """
 
+from __future__ import annotations
+
 import asyncio
 import json
 import os

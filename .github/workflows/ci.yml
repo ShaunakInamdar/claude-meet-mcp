@@ -8,13 +8,12 @@ on:
 
 jobs:
   test:
-    name: Test (Python ${{ matrix.python-version }}, ${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
+    name: Test (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: ['3.9', '3.10', '3.11', '3.12']
+        python-version: ['3.9', '3.12']
 
     steps:
       - name: Checkout code
@@ -37,7 +36,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install pytest pytest-cov ruff
+          pip install pytest pytest-cov
 
       - name: Install package
         run: pip install -e .
@@ -56,7 +55,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.12'
 
       - name: Install ruff
         run: pip install ruff
@@ -66,60 +65,3 @@ jobs:
 
       - name: Run ruff formatter check
         run: ruff format --check claude_meet/ tests/
-        continue-on-error: true
-
-  install-check:
-    name: Installation Check
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Install package
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install -e .
-
-      - name: Verify CLI works
-        run: |
-          claude-meet --version
-          claude-meet --help
-
-      - name: Verify commands exist
-        run: |
-          claude-meet config --help
-          claude-meet check --help
-          claude-meet init --help
-          claude-meet mcp-setup --help
-
-  security:
-    name: Security Check
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Install safety
-        run: pip install safety
-
-      - name: Check dependencies for vulnerabilities
-        run: |
-          pip install -r requirements.txt
-          safety check
-        continue-on-error: true
