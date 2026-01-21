@@ -3,7 +3,7 @@
 **Stop playing email tennis. Let AI schedule your meetings in seconds.**
 
 [![PyPI version](https://badge.fury.io/py/claude-meet-mcp.svg)](https://badge.fury.io/py/claude-meet-mcp)
-[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 [![CI](https://github.com/ShaunakInamdar/claude-meet-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/ShaunakInamdar/claude-meet-mcp/actions)
 

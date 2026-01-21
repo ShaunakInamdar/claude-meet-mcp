@@ -7,7 +7,7 @@ name = "claude-meet-mcp"
 version = "1.0.0"
 description = "AI-powered meeting scheduler using Claude and Google Calendar. Stop playing email tennis."
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 license = "MIT"
 authors = [
     {name = "Shaunak Inamdar", email = "inamdarshaunak01@gmail.com"}
@@ -35,7 +35,6 @@ classifiers = [
     "Intended Audience :: End Users/Desktop",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -84,7 +83,7 @@ include-package-data = true
 claude_meet = ["py.typed"]
 
 [tool.ruff]
-target-version = "py39"
+target-version = "py310"
 line-length = 100
 
 [tool.ruff.lint]
