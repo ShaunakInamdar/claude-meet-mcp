@@ -24,7 +24,7 @@ class CalendarClient:
     - Find available meeting time slots
     """
 
-    def __init__(self, service, timezone: str = 'Europe/Berlin'):
+    def __init__(self, service, timezone: str = "Europe/Berlin"):
         """
         Initialize the calendar client.
 
@@ -43,7 +43,7 @@ class CalendarClient:
         end_time: str,
         attendees: list,
         description: Optional[str] = None,
-        add_meet_link: bool = False
+        add_meet_link: bool = False,
     ) -> dict:
         """
         Create a calendar event and send invitations to attendees.
@@ -70,58 +70,57 @@ class CalendarClient:
             HttpError: If the Calendar API request fails
         """
         event = {
-            'summary': summary,
-            'description': description or '',
-            'start': {
-                'dateTime': start_time,
-                'timeZone': self.timezone,
+            "summary": summary,
+            "description": description or "",
+            "start": {
+                "dateTime": start_time,
+                "timeZone": self.timezone,
             },
-            'end': {
-                'dateTime': end_time,
-                'timeZone': self.timezone,
+            "end": {
+                "dateTime": end_time,
+                "timeZone": self.timezone,
             },
-            'attendees': [{'email': email} for email in attendees],
-            'reminders': {
-                'useDefault': True,
+            "attendees": [{"email": email} for email in attendees],
+            "reminders": {
+                "useDefault": True,
             },
         }
 
         # Add Google Meet link if requested
         if add_meet_link:
-            event['conferenceData'] = {
-                'createRequest': {
-                    'requestId': str(uuid.uuid4()),
-                    'conferenceSolutionKey': {'type': 'hangoutsMeet'}
+            event["conferenceData"] = {
+                "createRequest": {
+                    "requestId": str(uuid.uuid4()),
+                    "conferenceSolutionKey": {"type": "hangoutsMeet"},
                 }
             }
 
         try:
-            created_event = self.service.events().insert(
-                calendarId='primary',
-                body=event,
-                conferenceDataVersion=1 if add_meet_link else 0,
-                sendUpdates='all'  # Send email invitations to all attendees
-            ).execute()
+            created_event = (
+                self.service.events()
+                .insert(
+                    calendarId="primary",
+                    body=event,
+                    conferenceDataVersion=1 if add_meet_link else 0,
+                    sendUpdates="all",  # Send email invitations to all attendees
+                )
+                .execute()
+            )
 
             return {
-                'event_id': created_event['id'],
-                'html_link': created_event['htmlLink'],
-                'summary': created_event['summary'],
-                'start': created_event['start'].get('dateTime', created_event['start'].get('date')),
-                'end': created_event['end'].get('dateTime', created_event['end'].get('date')),
-                'attendees': [a['email'] for a in created_event.get('attendees', [])],
-                'meet_link': created_event.get('hangoutLink')
+                "event_id": created_event["id"],
+                "html_link": created_event["htmlLink"],
+                "summary": created_event["summary"],
+                "start": created_event["start"].get("dateTime", created_event["start"].get("date")),
+                "end": created_event["end"].get("dateTime", created_event["end"].get("date")),
+                "attendees": [a["email"] for a in created_event.get("attendees", [])],
+                "meet_link": created_event.get("hangoutLink"),
             }
 
         except HttpError as e:
             raise Exception(self._handle_calendar_error(e))
 
-    def check_availability(
-        self,
-        emails: list,
-        start_time: str,
-        end_time: str
-    ) -> dict:
+    def check_availability(self, emails: list, start_time: str, end_time: str) -> dict:
         """
         Check free/busy status for multiple calendars.
 
@@ -140,7 +139,7 @@ class CalendarClient:
         body = {
             "timeMin": start_time,
             "timeMax": end_time,
-            "items": [{"id": email} for email in emails]
+            "items": [{"id": email} for email in emails],
         }
 
         try:
@@ -148,8 +147,8 @@ class CalendarClient:
 
             availability = {}
             for email in emails:
-                calendar_data = result['calendars'].get(email, {})
-                availability[email] = calendar_data.get('busy', [])
+                calendar_data = result["calendars"].get(email, {})
+                availability[email] = calendar_data.get("busy", [])
 
             return availability
 
@@ -163,7 +162,7 @@ class CalendarClient:
         duration_minutes: int,
         start_hour: int = 9,
         end_hour: int = 17,
-        preferences: Optional[dict] = None
+        preferences: Optional[dict] = None,
     ) -> list:
         """
         Find available meeting time slots for all attendees.
@@ -201,35 +200,32 @@ class CalendarClient:
             all_busy.extend(busy_periods)
 
         # Sort busy periods by start time
-        all_busy.sort(key=lambda x: x['start'])
+        all_busy.sort(key=lambda x: x["start"])
 
         # Merge overlapping busy periods
         merged_busy = self._merge_busy_periods(all_busy)
 
         # Find free slots between busy periods
-        free_slots = self._find_gaps(
-            merged_busy,
-            start_time,
-            end_time,
-            duration_minutes
-        )
+        free_slots = self._find_gaps(merged_busy, start_time, end_time, duration_minutes)
 
         # Score and rank slots
         scored_slots = []
         for slot in free_slots:
-            score = self._score_time_slot(slot['start'], preferences)
-            display = self._format_slot_for_display(slot['start'], slot['end'])
+            score = self._score_time_slot(slot["start"], preferences)
+            display = self._format_slot_for_display(slot["start"], slot["end"])
 
-            scored_slots.append({
-                'start': slot['start'],
-                'end': slot['end'],
-                'duration_minutes': slot['duration_minutes'],
-                'score': score,
-                'display': display
-            })
+            scored_slots.append(
+                {
+                    "start": slot["start"],
+                    "end": slot["end"],
+                    "duration_minutes": slot["duration_minutes"],
+                    "score": score,
+                    "display": display,
+                }
+            )
 
         # Sort by score (highest first) and return top results
-        scored_slots.sort(key=lambda x: x['score'], reverse=True)
+        scored_slots.sort(key=lambda x: x["score"], reverse=True)
         return scored_slots[:10]
 
     def get_upcoming_events(self, max_results: int = 10) -> list:
@@ -242,27 +238,31 @@ class CalendarClient:
         Returns:
             list: List of upcoming events
         """
-        now = datetime.utcnow().isoformat() + 'Z'
+        now = datetime.utcnow().isoformat() + "Z"
 
         try:
-            events_result = self.service.events().list(
-                calendarId='primary',
-                timeMin=now,
-                maxResults=max_results,
-                singleEvents=True,
-                orderBy='startTime'
-            ).execute()
+            events_result = (
+                self.service.events()
+                .list(
+                    calendarId="primary",
+                    timeMin=now,
+                    maxResults=max_results,
+                    singleEvents=True,
+                    orderBy="startTime",
+                )
+                .execute()
+            )
 
-            return events_result.get('items', [])
+            return events_result.get("items", [])
 
         except HttpError as e:
             raise Exception(self._handle_calendar_error(e))
 
     def _get_tz_offset(self, date: str) -> str:
         """Get timezone offset string for a given date."""
-        dt = datetime.strptime(date, '%Y-%m-%d')
+        dt = datetime.strptime(date, "%Y-%m-%d")
         localized = self.tz.localize(dt)
-        offset = localized.strftime('%z')
+        offset = localized.strftime("%z")
         # Format as -08:00 instead of -0800
         return f"{offset[:3]}:{offset[3:]}"
 
@@ -275,42 +275,36 @@ class CalendarClient:
 
         for period in busy_periods[1:]:
             last = merged[-1]
-            if period['start'] <= last['end']:
+            if period["start"] <= last["end"]:
                 # Overlapping or adjacent - extend the last period
-                last['end'] = max(last['end'], period['end'])
+                last["end"] = max(last["end"], period["end"])
             else:
                 merged.append(period.copy())
 
         return merged
 
     def _find_gaps(
-        self,
-        busy_periods: list,
-        range_start: str,
-        range_end: str,
-        min_duration: int
+        self, busy_periods: list, range_start: str, range_end: str, min_duration: int
     ) -> list:
         """Find free time gaps between busy periods."""
         gaps = []
         current = range_start
 
         for busy in busy_periods:
-            gap_minutes = self._time_diff_minutes(current, busy['start'])
+            gap_minutes = self._time_diff_minutes(current, busy["start"])
 
             if gap_minutes >= min_duration:
                 # Calculate end time for the required duration
                 gap_start = parser.parse(current)
                 gap_end = gap_start + timedelta(minutes=min_duration)
 
-                gaps.append({
-                    'start': current,
-                    'end': gap_end.isoformat(),
-                    'duration_minutes': gap_minutes
-                })
+                gaps.append(
+                    {"start": current, "end": gap_end.isoformat(), "duration_minutes": gap_minutes}
+                )
 
             # Move past the busy period
-            if busy['end'] > current:
-                current = busy['end']
+            if busy["end"] > current:
+                current = busy["end"]
 
         # Check for gap after last busy period
         final_gap = self._time_diff_minutes(current, range_end)
@@ -318,11 +312,9 @@ class CalendarClient:
             gap_start = parser.parse(current)
             gap_end = gap_start + timedelta(minutes=min_duration)
 
-            gaps.append({
-                'start': current,
-                'end': gap_end.isoformat(),
-                'duration_minutes': final_gap
-            })
+            gaps.append(
+                {"start": current, "end": gap_end.isoformat(), "duration_minutes": final_gap}
+            )
 
         return gaps
 
@@ -374,9 +366,9 @@ class CalendarClient:
 
         # Apply user preferences
         if preferences:
-            if preferences.get('prefer_morning') and 9 <= hour < 12:
+            if preferences.get("prefer_morning") and 9 <= hour < 12:
                 score += 10
-            if preferences.get('prefer_afternoon') and 13 <= hour < 17:
+            if preferences.get("prefer_afternoon") and 13 <= hour < 17:
                 score += 10
 
         return score

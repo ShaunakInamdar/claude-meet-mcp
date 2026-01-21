@@ -5,7 +5,7 @@ Provides algorithms for analyzing availability, scoring time slots,
 and finding mutual free times for multiple attendees.
 """
 
-from datetime import datetime, timedelta
+from datetime import timedelta
 from typing import Optional
 
 import pytz
@@ -13,10 +13,7 @@ from dateutil import parser
 
 
 def find_mutual_availability(
-    busy_periods: dict,
-    start_time: str,
-    end_time: str,
-    duration_minutes: int
+    busy_periods: dict, start_time: str, end_time: str, duration_minutes: int
 ) -> list:
     """
     Find time slots where ALL attendees are free.
@@ -39,14 +36,10 @@ def find_mutual_availability(
     all_busy = []
     for email, periods in busy_periods.items():
         for period in periods:
-            all_busy.append({
-                'start': period['start'],
-                'end': period['end'],
-                'email': email
-            })
+            all_busy.append({"start": period["start"], "end": period["end"], "email": email})
 
     # Sort by start time
-    all_busy.sort(key=lambda x: x['start'])
+    all_busy.sort(key=lambda x: x["start"])
 
     # Merge overlapping periods
     merged = merge_busy_periods(all_busy)
@@ -57,16 +50,18 @@ def find_mutual_availability(
     # Score each slot
     scored_slots = []
     for slot in free_slots:
-        score = score_time_slot(slot['start'])
-        scored_slots.append({
-            'start': slot['start'],
-            'end': slot['end'],
-            'duration_minutes': slot.get('duration_minutes', duration_minutes),
-            'score': score
-        })
+        score = score_time_slot(slot["start"])
+        scored_slots.append(
+            {
+                "start": slot["start"],
+                "end": slot["end"],
+                "duration_minutes": slot.get("duration_minutes", duration_minutes),
+                "score": score,
+            }
+        )
 
     # Sort by score (highest first)
-    scored_slots.sort(key=lambda x: x['score'], reverse=True)
+    scored_slots.sort(key=lambda x: x["score"], reverse=True)
 
     return scored_slots
 
@@ -85,34 +80,29 @@ def merge_busy_periods(busy_periods: list) -> list:
         return []
 
     # Sort by start time
-    sorted_periods = sorted(busy_periods, key=lambda x: x['start'])
+    sorted_periods = sorted(busy_periods, key=lambda x: x["start"])
 
-    merged = [{'start': sorted_periods[0]['start'], 'end': sorted_periods[0]['end']}]
+    merged = [{"start": sorted_periods[0]["start"], "end": sorted_periods[0]["end"]}]
 
     for period in sorted_periods[1:]:
         last = merged[-1]
 
         # Check for overlap or adjacency (within 1 minute)
-        last_end = parser.parse(last['end'])
-        period_start = parser.parse(period['start'])
+        last_end = parser.parse(last["end"])
+        period_start = parser.parse(period["start"])
 
         if (period_start - last_end).total_seconds() <= 60:
             # Extend the last period
-            period_end = parser.parse(period['end'])
+            period_end = parser.parse(period["end"])
             if period_end > last_end:
-                last['end'] = period['end']
+                last["end"] = period["end"]
         else:
-            merged.append({'start': period['start'], 'end': period['end']})
+            merged.append({"start": period["start"], "end": period["end"]})
 
     return merged
 
 
-def find_free_gaps(
-    busy_periods: list,
-    range_start: str,
-    range_end: str,
-    min_duration: int
-) -> list:
+def find_free_gaps(busy_periods: list, range_start: str, range_end: str, min_duration: int) -> list:
     """
     Find free time gaps between busy periods.
 
@@ -130,27 +120,19 @@ def find_free_gaps(
 
     for busy in busy_periods:
         # Calculate gap before this busy period
-        gap_minutes = time_diff_minutes(current, busy['start'])
+        gap_minutes = time_diff_minutes(current, busy["start"])
 
         if gap_minutes >= min_duration:
-            gaps.append({
-                'start': current,
-                'end': busy['start'],
-                'duration_minutes': gap_minutes
-            })
+            gaps.append({"start": current, "end": busy["start"], "duration_minutes": gap_minutes})
 
         # Move current pointer past the busy period
-        if busy['end'] > current:
-            current = busy['end']
+        if busy["end"] > current:
+            current = busy["end"]
 
     # Check for gap after the last busy period
     final_gap = time_diff_minutes(current, range_end)
     if final_gap >= min_duration:
-        gaps.append({
-            'start': current,
-            'end': range_end,
-            'duration_minutes': final_gap
-        })
+        gaps.append({"start": current, "end": range_end, "duration_minutes": final_gap})
 
     return gaps
 
@@ -176,10 +158,7 @@ def time_diff_minutes(start: str, end: str) -> int:
         return 0
 
 
-def score_time_slot(
-    slot_start: str,
-    preferences: Optional[dict] = None
-) -> int:
+def score_time_slot(slot_start: str, preferences: Optional[dict] = None) -> int:
     """
     Score a time slot based on scheduling preferences.
 
@@ -220,23 +199,23 @@ def score_time_slot(
     elif 9 <= hour < 11:
         score += 10  # Prime morning time
     elif 11 <= hour < 12:
-        score += 5   # Late morning
+        score += 5  # Late morning
     elif 12 <= hour < 13:
         score -= 10  # Lunch time
     elif 13 <= hour < 15:
-        score += 5   # Early afternoon
+        score += 5  # Early afternoon
     elif 15 <= hour < 17:
-        score += 0   # Late afternoon (neutral)
+        score += 0  # Late afternoon (neutral)
     else:
         score -= 20  # After hours
 
     # Apply preferences if provided
     if preferences:
-        if preferences.get('prefer_morning') and 9 <= hour < 12:
+        if preferences.get("prefer_morning") and 9 <= hour < 12:
             score += 10
-        if preferences.get('prefer_afternoon') and 13 <= hour < 17:
+        if preferences.get("prefer_afternoon") and 13 <= hour < 17:
             score += 10
-        if preferences.get('avoid_lunch', True) and 12 <= hour < 13:
+        if preferences.get("avoid_lunch", True) and 12 <= hour < 13:
             score -= 5  # Extra penalty for lunch
 
     # Slight preference for "on the hour" meetings
@@ -248,10 +227,7 @@ def score_time_slot(
     return score
 
 
-def format_time_slot(
-    slot: dict,
-    timezone: str = 'Europe/Berlin'
-) -> str:
+def format_time_slot(slot: dict, timezone: str = "Europe/Berlin") -> str:
     """
     Format a time slot for human-readable display.
 
@@ -264,12 +240,12 @@ def format_time_slot(
     """
     try:
         tz = pytz.timezone(timezone)
-        start_dt = parser.parse(slot['start']).astimezone(tz)
-        end_dt = parser.parse(slot['end']).astimezone(tz)
+        start_dt = parser.parse(slot["start"]).astimezone(tz)
+        end_dt = parser.parse(slot["end"]).astimezone(tz)
 
-        date_str = start_dt.strftime('%A, %B %d')
-        start_time = start_dt.strftime('%I:%M %p').lstrip('0')
-        end_time = end_dt.strftime('%I:%M %p %Z').lstrip('0')
+        date_str = start_dt.strftime("%A, %B %d")
+        start_time = start_dt.strftime("%I:%M %p").lstrip("0")
+        end_time = end_dt.strftime("%I:%M %p %Z").lstrip("0")
 
         return f"{date_str} at {start_time} - {end_time}"
     except Exception:
@@ -277,9 +253,7 @@ def format_time_slot(
 
 
 def format_slots_as_options(
-    slots: list,
-    timezone: str = 'Europe/Berlin',
-    max_options: int = 5
+    slots: list, timezone: str = "Europe/Berlin", max_options: int = 5
 ) -> str:
     """
     Format multiple slots as numbered options for display.
@@ -299,9 +273,9 @@ def format_slots_as_options(
     for i, slot in enumerate(slots[:max_options], 1):
         formatted = format_time_slot(slot, timezone)
         score_indicator = ""
-        if slot.get('score', 0) >= 60:
+        if slot.get("score", 0) >= 60:
             score_indicator = " (Recommended)"
-        elif slot.get('score', 0) >= 50:
+        elif slot.get("score", 0) >= 50:
             score_indicator = " (Good option)"
 
         lines.append(f"{i}. {formatted}{score_indicator}")
@@ -309,10 +283,7 @@ def format_slots_as_options(
     return "\n".join(lines)
 
 
-def calculate_end_time(
-    start_time: str,
-    duration_minutes: int
-) -> str:
+def calculate_end_time(start_time: str, duration_minutes: int) -> str:
     """
     Calculate end time given start time and duration.
 

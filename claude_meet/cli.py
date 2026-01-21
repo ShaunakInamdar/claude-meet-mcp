@@ -10,25 +10,31 @@ import sys
 from pathlib import Path
 
 # Fix Windows console encoding for Unicode
-if sys.platform == 'win32':
-    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
-    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+if sys.platform == "win32":
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    if hasattr(sys.stderr, "reconfigure"):
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
 import click
 from dotenv import load_dotenv
 
-from .auth import get_calendar_service, clear_credentials
+from .auth import clear_credentials, get_calendar_service
 from .calendar_client import CalendarClient
 from .claude_client import ClaudeClient
 from .config import (
-    Config, detect_system_timezone, save_timezone, get_common_timezones,
-    get_env_file_path, get_google_credentials_path, get_config_value,
-    set_config_value, list_all_config, CONFIG_KEYS, get_config_dir
+    CONFIG_KEYS,
+    Config,
+    detect_system_timezone,
+    get_common_timezones,
+    get_config_dir,
+    get_config_value,
+    get_env_file_path,
+    get_google_credentials_path,
+    save_timezone,
+    set_config_value,
 )
-from .errors import (
-    APIKeyNotFoundError, CredentialsNotFoundError, AuthenticationError,
-    print_error
-)
+from .errors import APIKeyNotFoundError
 
 
 def get_api_key() -> str:
@@ -47,19 +53,19 @@ def get_api_key() -> str:
         APIKeyNotFoundError: If no API key is found
     """
     # Check environment variable first
-    api_key = os.getenv('ANTHROPIC_API_KEY')
+    api_key = os.getenv("ANTHROPIC_API_KEY")
     if api_key:
         return api_key.strip()
 
     # Check user config directory
-    user_key_file = get_config_dir() / 'anthropic_apikey.txt'
+    user_key_file = get_config_dir() / "anthropic_apikey.txt"
     if user_key_file.exists():
         api_key = user_key_file.read_text().strip()
         if api_key:
             return api_key
 
     # Check project config file
-    config_file = Path(__file__).parent.parent / 'config' / 'anthropic_apikey.txt'
+    config_file = Path(__file__).parent.parent / "config" / "anthropic_apikey.txt"
     if config_file.exists():
         api_key = config_file.read_text().strip()
         if api_key:
@@ -69,7 +75,7 @@ def get_api_key() -> str:
 
 
 @click.group(invoke_without_command=True)
-@click.version_option(version='1.0.0', prog_name='claude-meet')
+@click.version_option(version="1.0.0", prog_name="claude-meet")
 @click.pass_context
 def cli(ctx):
     """
@@ -96,7 +102,7 @@ def cli(ctx):
 
 
 @cli.command()
-@click.option('--debug', is_flag=True, help='Enable debug mode with verbose output')
+@click.option("--debug", is_flag=True, help="Enable debug mode with verbose output")
 def chat(debug):
     """
     Start an interactive chat session for scheduling meetings.
@@ -118,18 +124,19 @@ def chat(debug):
     user_env = get_env_file_path()
     if user_env.exists():
         from dotenv import load_dotenv as ld
+
         ld(user_env, override=True)
 
     config = Config()
 
     # Check if this is first run (no user config exists)
-    is_first_run = not user_env.exists() and not os.getenv('TIMEZONE')
+    is_first_run = not user_env.exists() and not os.getenv("TIMEZONE")
 
     click.echo("=" * 60)
     click.echo("  Claude Calendar Scheduler")
     click.echo(f"  Timezone: {click.style(config.default_timezone, fg='yellow')}", nl=False)
     if is_first_run:
-        click.echo(click.style(" (auto-detected)", fg='cyan'))
+        click.echo(click.style(" (auto-detected)", fg="cyan"))
     else:
         click.echo()
     click.echo("  Type 'help' for commands, 'exit' to quit")
@@ -138,7 +145,7 @@ def chat(debug):
     # First-run prompt
     if is_first_run:
         click.echo()
-        click.echo(click.style("First time setup:", fg='cyan', bold=True))
+        click.echo(click.style("First time setup:", fg="cyan", bold=True))
         click.echo(f"  Your timezone was auto-detected as {config.default_timezone}")
         if not click.confirm("  Is this correct?", default=True):
             click.echo("\n  Run 'claude-meet setup' to configure your timezone.")
@@ -146,7 +153,7 @@ def chat(debug):
             return
         # Save the detected timezone so we don't ask again
         save_timezone(config.default_timezone)
-        click.echo(click.style("  Timezone saved!\n", fg='green'))
+        click.echo(click.style("  Timezone saved!\n", fg="green"))
 
     click.echo()
 
@@ -163,6 +170,7 @@ def chat(debug):
         click.echo(f"\nError connecting to Google Calendar: {str(e)}", err=True)
         if debug:
             import traceback
+
             traceback.print_exc()
         sys.exit(1)
 
@@ -179,10 +187,7 @@ def chat(debug):
         try:
             # Get user input (allow empty with default)
             user_input = click.prompt(
-                click.style("You", fg='green', bold=True),
-                type=str,
-                default='',
-                show_default=False
+                click.style("You", fg="green", bold=True), type=str, default="", show_default=False
             )
 
             # Skip empty input silently
@@ -192,25 +197,27 @@ def chat(debug):
             user_input = user_input.strip()
 
             # Check for exit commands
-            if user_input.lower() in ['exit', 'quit', 'q']:
+            if user_input.lower() in ["exit", "quit", "q"]:
                 click.echo("\nGoodbye! Have a productive day!")
                 break
 
             # Check for help command
-            if user_input.lower() == 'help':
+            if user_input.lower() == "help":
                 _show_help()
                 continue
 
             # Check for clear command
-            if user_input.lower() == 'clear':
+            if user_input.lower() == "clear":
                 conversation_history = []
                 click.clear()
                 click.echo("Conversation cleared.\n")
                 continue
 
             # Check for config/settings command
-            if user_input.lower() in ['config', 'settings', 'timezone']:
-                click.echo(f"\nCurrent timezone: {click.style(config.default_timezone, fg='yellow')}")
+            if user_input.lower() in ["config", "settings", "timezone"]:
+                click.echo(
+                    f"\nCurrent timezone: {click.style(config.default_timezone, fg='yellow')}"
+                )
                 click.echo("To change: exit and run 'claude-meet setup'\n")
                 continue
 
@@ -218,12 +225,11 @@ def chat(debug):
             click.echo()  # Blank line before response
 
             response, conversation_history = claude_client.process_message(
-                user_input,
-                conversation_history
+                user_input, conversation_history
             )
 
             # Display Claude's response
-            click.echo(click.style("Claude: ", fg='blue', bold=True) + response)
+            click.echo(click.style("Claude: ", fg="blue", bold=True) + response)
             click.echo()
 
         except KeyboardInterrupt:
@@ -233,13 +239,14 @@ def chat(debug):
             click.echo(f"\nError: {str(e)}", err=True)
             if debug:
                 import traceback
+
                 traceback.print_exc()
             click.echo()  # Continue the conversation
 
 
 @cli.command()
-@click.argument('message', nargs=-1, required=True)
-@click.option('--debug', is_flag=True, help='Enable debug mode')
+@click.argument("message", nargs=-1, required=True)
+@click.option("--debug", is_flag=True, help="Enable debug mode")
 def schedule(message, debug):
     """
     Send a single scheduling request without interactive mode.
@@ -253,9 +260,10 @@ def schedule(message, debug):
     user_env = get_env_file_path()
     if user_env.exists():
         from dotenv import load_dotenv as ld
+
         ld(user_env, override=True)
 
-    message_text = ' '.join(message)
+    message_text = " ".join(message)
 
     try:
         # Initialize services
@@ -275,6 +283,7 @@ def schedule(message, debug):
         click.echo(f"Error: {str(e)}", err=True)
         if debug:
             import traceback
+
             traceback.print_exc()
         sys.exit(1)
 
@@ -293,8 +302,8 @@ def auth():
         service = get_calendar_service()
 
         # Test the connection by getting calendar info
-        calendar = service.calendars().get(calendarId='primary').execute()
-        click.echo(f"\nSuccessfully authenticated!")
+        calendar = service.calendars().get(calendarId="primary").execute()
+        click.echo("\nSuccessfully authenticated!")
         click.echo(f"Connected to calendar: {calendar.get('summary', 'Primary')}")
 
     except Exception as e:
@@ -314,7 +323,7 @@ def logout():
 
 
 @cli.command()
-@click.option('--timezone', '-tz', help='Set timezone directly (e.g., Europe/Berlin)')
+@click.option("--timezone", "-tz", help="Set timezone directly (e.g., Europe/Berlin)")
 def setup(timezone):
     """
     Configure Claude Calendar Scheduler settings.
@@ -323,7 +332,7 @@ def setup(timezone):
     Your settings are saved to ~/.claude-meet/.env
     """
     click.echo()
-    click.echo(click.style("Claude Calendar Scheduler - Setup", fg='cyan', bold=True))
+    click.echo(click.style("Claude Calendar Scheduler - Setup", fg="cyan", bold=True))
     click.echo("=" * 45)
     click.echo()
 
@@ -332,12 +341,13 @@ def setup(timezone):
         # Validate the provided timezone
         try:
             import pytz
+
             pytz.timezone(timezone)
             env_path = save_timezone(timezone)
-            click.echo(click.style(f"Timezone set to: {timezone}", fg='green'))
+            click.echo(click.style(f"Timezone set to: {timezone}", fg="green"))
             click.echo(f"Saved to: {env_path}")
-        except Exception as e:
-            click.echo(click.style(f"Invalid timezone: {timezone}", fg='red'), err=True)
+        except Exception:
+            click.echo(click.style(f"Invalid timezone: {timezone}", fg="red"), err=True)
             click.echo("Use 'claude-meet setup' without arguments to see available options.")
             return
     else:
@@ -347,10 +357,7 @@ def setup(timezone):
         click.echo()
 
         # Ask if they want to use detected timezone
-        use_detected = click.confirm(
-            f"Use {detected_tz} as your timezone?",
-            default=True
-        )
+        use_detected = click.confirm(f"Use {detected_tz} as your timezone?", default=True)
 
         if use_detected:
             selected_tz = detected_tz
@@ -363,7 +370,7 @@ def setup(timezone):
             # Group by region
             regions = {}
             for tz in timezones:
-                region = tz.split('/')[0]
+                region = tz.split("/")[0]
                 if region not in regions:
                     regions[region] = []
                 regions[region].append(tz)
@@ -371,12 +378,12 @@ def setup(timezone):
             # Display grouped
             idx = 1
             tz_map = {}
-            for region in ['Europe', 'America', 'Asia', 'Australia', 'Pacific', 'UTC']:
-                if region in regions or region == 'UTC':
-                    click.echo(click.style(f"\n  {region}:", fg='cyan'))
-                    tzs = regions.get(region, ['UTC'])
+            for region in ["Europe", "America", "Asia", "Australia", "Pacific", "UTC"]:
+                if region in regions or region == "UTC":
+                    click.echo(click.style(f"\n  {region}:", fg="cyan"))
+                    tzs = regions.get(region, ["UTC"])
                     for tz in tzs:
-                        city = tz.split('/')[-1].replace('_', ' ') if '/' in tz else tz
+                        city = tz.split("/")[-1].replace("_", " ") if "/" in tz else tz
                         click.echo(f"    {idx:2}. {city:<20} ({tz})")
                         tz_map[idx] = tz
                         idx += 1
@@ -385,31 +392,28 @@ def setup(timezone):
             click.echo(f"    {idx}. Enter custom timezone")
             click.echo()
 
-            choice = click.prompt(
-                "Select timezone",
-                type=int,
-                default=1
-            )
+            choice = click.prompt("Select timezone", type=int, default=1)
 
             if choice == idx:
                 # Custom timezone
                 selected_tz = click.prompt("Enter timezone (e.g., Europe/Berlin)")
                 try:
                     import pytz
+
                     pytz.timezone(selected_tz)
                 except Exception:
-                    click.echo(click.style(f"Invalid timezone: {selected_tz}", fg='red'))
+                    click.echo(click.style(f"Invalid timezone: {selected_tz}", fg="red"))
                     return
             elif choice in tz_map:
                 selected_tz = tz_map[choice]
             else:
-                click.echo(click.style("Invalid selection", fg='red'))
+                click.echo(click.style("Invalid selection", fg="red"))
                 return
 
         # Save the timezone
         env_path = save_timezone(selected_tz)
         click.echo()
-        click.echo(click.style(f"Timezone set to: {selected_tz}", fg='green', bold=True))
+        click.echo(click.style(f"Timezone set to: {selected_tz}", fg="green", bold=True))
         click.echo(f"Configuration saved to: {env_path}")
 
     click.echo()
@@ -436,7 +440,7 @@ def config(ctx):
         ctx.invoke(config_show)
 
 
-@config.command('show')
+@config.command("show")
 def config_show():
     """Show current configuration settings."""
     load_dotenv()
@@ -445,12 +449,13 @@ def config_show():
     user_env = get_env_file_path()
     if user_env.exists():
         from dotenv import load_dotenv as ld
+
         ld(user_env)
 
     cfg = Config()
 
     click.echo()
-    click.echo(click.style("Current Configuration", fg='cyan', bold=True))
+    click.echo(click.style("Current Configuration", fg="cyan", bold=True))
     click.echo("=" * 40)
     click.echo()
     click.echo(f"  Timezone:        {click.style(cfg.default_timezone, fg='yellow')}")
@@ -460,20 +465,20 @@ def config_show():
     click.echo()
 
     # Show API key status
-    api_key_status = click.style("Not set", fg='red')
+    api_key_status = click.style("Not set", fg="red")
     try:
         key = get_api_key()
-        api_key_status = click.style(f"{key[:8]}...{key[-4:]}", fg='green')
-    except:
+        api_key_status = click.style(f"{key[:8]}...{key[-4:]}", fg="green")
+    except Exception:
         pass
     click.echo(f"  Anthropic API:   {api_key_status}")
 
     # Show credentials status
     creds_path = get_google_credentials_path()
     if creds_path:
-        creds_status = click.style("Found", fg='green')
+        creds_status = click.style("Found", fg="green")
     else:
-        creds_status = click.style("Not found", fg='red')
+        creds_status = click.style("Not found", fg="red")
     click.echo(f"  Google creds:    {creds_status}")
 
     click.echo()
@@ -486,8 +491,8 @@ def config_show():
     click.echo()
 
 
-@config.command('set')
-@click.argument('key_value')
+@config.command("set")
+@click.argument("key_value")
 def config_set(key_value):
     """
     Set a configuration value.
@@ -497,36 +502,37 @@ def config_set(key_value):
       claude-meet config set TIMEZONE=Europe/Berlin
       claude-meet config set ANTHROPIC_API_KEY=sk-ant-...
     """
-    if '=' not in key_value:
-        click.echo(click.style("Error: ", fg='red') + "Use format: KEY=value")
+    if "=" not in key_value:
+        click.echo(click.style("Error: ", fg="red") + "Use format: KEY=value")
         click.echo("Example: claude-meet config set TIMEZONE=Europe/Berlin")
         sys.exit(1)
 
-    key, value = key_value.split('=', 1)
+    key, value = key_value.split("=", 1)
     key = key.upper().strip()
     value = value.strip()
 
     if not value:
-        click.echo(click.style("Error: ", fg='red') + "Value cannot be empty")
+        click.echo(click.style("Error: ", fg="red") + "Value cannot be empty")
         sys.exit(1)
 
     # Validate timezone if setting TIMEZONE
-    if key == 'TIMEZONE':
+    if key == "TIMEZONE":
         try:
             import pytz
+
             pytz.timezone(value)
         except Exception:
-            click.echo(click.style(f"Error: Invalid timezone: {value}", fg='red'))
+            click.echo(click.style(f"Error: Invalid timezone: {value}", fg="red"))
             click.echo("Run 'claude-meet setup' to see valid timezones.")
             sys.exit(1)
 
     env_path = set_config_value(key, value)
-    click.echo(click.style(f"Set {key}", fg='green'))
+    click.echo(click.style(f"Set {key}", fg="green"))
     click.echo(f"Saved to: {env_path}")
 
 
-@config.command('get')
-@click.argument('key')
+@config.command("get")
+@click.argument("key")
 def config_get(key):
     """
     Get a configuration value.
@@ -540,6 +546,7 @@ def config_get(key):
     user_env = get_env_file_path()
     if user_env.exists():
         from dotenv import load_dotenv as ld
+
         ld(user_env, override=True)
 
     key = key.upper().strip()
@@ -548,21 +555,21 @@ def config_get(key):
     if value:
         # Mask sensitive values
         display_value = value
-        if 'KEY' in key or 'SECRET' in key:
+        if "KEY" in key or "SECRET" in key:
             if len(value) > 10:
-                display_value = value[:8] + '...' + value[-4:]
+                display_value = value[:8] + "..." + value[-4:]
         click.echo(f"{key}={display_value}")
     else:
         click.echo(f"{key} is not set")
 
 
-@config.command('list')
+@config.command("list")
 def config_list():
     """
     List all available configuration keys.
     """
     click.echo()
-    click.echo(click.style("Available Configuration Keys", fg='cyan', bold=True))
+    click.echo(click.style("Available Configuration Keys", fg="cyan", bold=True))
     click.echo("=" * 50)
     click.echo()
 
@@ -586,10 +593,11 @@ def check():
     user_env = get_env_file_path()
     if user_env.exists():
         from dotenv import load_dotenv as ld
+
         ld(user_env, override=True)
 
     click.echo()
-    click.echo(click.style("Claude Calendar Scheduler - Setup Check", fg='cyan', bold=True))
+    click.echo(click.style("Claude Calendar Scheduler - Setup Check", fg="cyan", bold=True))
     click.echo("=" * 50)
     click.echo()
 
@@ -599,16 +607,21 @@ def check():
     # Check 1: Python version
     py_version = sys.version_info
     if py_version >= (3, 9):
-        click.echo(click.style("  [OK] ", fg='green') + f"Python {py_version.major}.{py_version.minor}")
+        click.echo(
+            click.style("  [OK] ", fg="green") + f"Python {py_version.major}.{py_version.minor}"
+        )
     else:
-        click.echo(click.style("  [!]  ", fg='yellow') + f"Python {py_version.major}.{py_version.minor} (3.9+ recommended)")
+        click.echo(
+            click.style("  [!]  ", fg="yellow")
+            + f"Python {py_version.major}.{py_version.minor} (3.9+ recommended)"
+        )
 
     # Check 2: Config directory
     config_dir = get_config_dir()
     if config_dir.exists():
-        click.echo(click.style("  [OK] ", fg='green') + f"Config directory: {config_dir}")
+        click.echo(click.style("  [OK] ", fg="green") + f"Config directory: {config_dir}")
     else:
-        click.echo(click.style("  [X]  ", fg='red') + "Config directory not found")
+        click.echo(click.style("  [X]  ", fg="red") + "Config directory not found")
         all_ok = False
         issues.append("Config directory missing")
 
@@ -616,65 +629,71 @@ def check():
     try:
         api_key = get_api_key()
         masked = f"{api_key[:8]}...{api_key[-4:]}"
-        click.echo(click.style("  [OK] ", fg='green') + f"Anthropic API key: {masked}")
+        click.echo(click.style("  [OK] ", fg="green") + f"Anthropic API key: {masked}")
     except APIKeyNotFoundError:
-        click.echo(click.style("  [X]  ", fg='red') + "Anthropic API key: Not found")
+        click.echo(click.style("  [X]  ", fg="red") + "Anthropic API key: Not found")
         all_ok = False
         issues.append("Set ANTHROPIC_API_KEY (claude-meet config set ANTHROPIC_API_KEY=...)")
 
     # Check 4: Google credentials file
     creds_path = get_google_credentials_path()
     if creds_path:
-        click.echo(click.style("  [OK] ", fg='green') + f"Google credentials: {creds_path}")
+        click.echo(click.style("  [OK] ", fg="green") + f"Google credentials: {creds_path}")
 
         # Validate JSON
         try:
             import json
-            with open(creds_path, 'r') as f:
+
+            with open(creds_path) as f:
                 creds_data = json.load(f)
-            if 'installed' in creds_data or 'web' in creds_data:
-                click.echo(click.style("  [OK] ", fg='green') + "Credentials file format: Valid")
+            if "installed" in creds_data or "web" in creds_data:
+                click.echo(click.style("  [OK] ", fg="green") + "Credentials file format: Valid")
             else:
-                click.echo(click.style("  [!]  ", fg='yellow') + "Credentials file format: Unusual structure")
+                click.echo(
+                    click.style("  [!]  ", fg="yellow")
+                    + "Credentials file format: Unusual structure"
+                )
         except json.JSONDecodeError:
-            click.echo(click.style("  [X]  ", fg='red') + "Credentials file format: Invalid JSON")
+            click.echo(click.style("  [X]  ", fg="red") + "Credentials file format: Invalid JSON")
             all_ok = False
             issues.append("credentials.json is not valid JSON")
     else:
-        click.echo(click.style("  [X]  ", fg='red') + "Google credentials: Not found")
+        click.echo(click.style("  [X]  ", fg="red") + "Google credentials: Not found")
         all_ok = False
         issues.append("Add Google OAuth credentials (see 'claude-meet init' for help)")
 
     # Check 5: OAuth token (authentication status)
-    token_path = get_config_dir() / 'token.json'
+    token_path = get_config_dir() / "token.json"
     if token_path.exists():
-        click.echo(click.style("  [OK] ", fg='green') + "Google authentication: Authenticated")
+        click.echo(click.style("  [OK] ", fg="green") + "Google authentication: Authenticated")
 
         # Try to verify token is valid
         try:
             service = get_calendar_service()
-            calendar = service.calendars().get(calendarId='primary').execute()
-            cal_name = calendar.get('summary', 'Primary')
-            click.echo(click.style("  [OK] ", fg='green') + f"Calendar connection: {cal_name}")
-        except Exception as e:
-            click.echo(click.style("  [!]  ", fg='yellow') + f"Calendar connection: Token may be expired")
+            calendar = service.calendars().get(calendarId="primary").execute()
+            cal_name = calendar.get("summary", "Primary")
+            click.echo(click.style("  [OK] ", fg="green") + f"Calendar connection: {cal_name}")
+        except Exception:
+            click.echo(
+                click.style("  [!]  ", fg="yellow") + "Calendar connection: Token may be expired"
+            )
             issues.append("Run 'claude-meet auth' to re-authenticate")
     else:
-        click.echo(click.style("  [X]  ", fg='red') + "Google authentication: Not authenticated")
+        click.echo(click.style("  [X]  ", fg="red") + "Google authentication: Not authenticated")
         all_ok = False
         issues.append("Run 'claude-meet auth' to authenticate")
 
     # Check 6: Timezone
     cfg = Config()
-    click.echo(click.style("  [OK] ", fg='green') + f"Timezone: {cfg.default_timezone}")
+    click.echo(click.style("  [OK] ", fg="green") + f"Timezone: {cfg.default_timezone}")
 
     click.echo()
 
     if all_ok and not issues:
-        click.echo(click.style("All checks passed!", fg='green', bold=True))
+        click.echo(click.style("All checks passed!", fg="green", bold=True))
         click.echo("You're ready to use: claude-meet chat")
     else:
-        click.echo(click.style("Setup incomplete. To fix:", fg='yellow', bold=True))
+        click.echo(click.style("Setup incomplete. To fix:", fg="yellow", bold=True))
         for issue in issues:
             click.echo(f"  - {issue}")
         click.echo()
@@ -695,9 +714,9 @@ def init():
     - Configuring your timezone
     """
     click.echo()
-    click.echo(click.style("=" * 60, fg='cyan'))
-    click.echo(click.style("  Claude Calendar Scheduler - Setup Wizard", fg='cyan', bold=True))
-    click.echo(click.style("=" * 60, fg='cyan'))
+    click.echo(click.style("=" * 60, fg="cyan"))
+    click.echo(click.style("  Claude Calendar Scheduler - Setup Wizard", fg="cyan", bold=True))
+    click.echo(click.style("=" * 60, fg="cyan"))
     click.echo()
     click.echo("This wizard will help you set up everything you need.")
     click.echo("Press Ctrl+C at any time to exit.\n")
@@ -706,10 +725,11 @@ def init():
     user_env = get_env_file_path()
     if user_env.exists():
         from dotenv import load_dotenv as ld
+
         ld(user_env, override=True)
 
     # Step 1: Anthropic API Key
-    click.echo(click.style("Step 1/4: Anthropic API Key", fg='cyan', bold=True))
+    click.echo(click.style("Step 1/4: Anthropic API Key", fg="cyan", bold=True))
     click.echo("-" * 40)
 
     try:
@@ -728,12 +748,12 @@ def init():
         click.echo()
         api_key = click.prompt("  Enter your Anthropic API key", hide_input=False)
         if api_key.strip():
-            set_config_value('ANTHROPIC_API_KEY', api_key.strip())
-            click.echo(click.style("  API key saved!", fg='green'))
+            set_config_value("ANTHROPIC_API_KEY", api_key.strip())
+            click.echo(click.style("  API key saved!", fg="green"))
     click.echo()
 
     # Step 2: Google Cloud Credentials
-    click.echo(click.style("Step 2/4: Google Cloud Credentials", fg='cyan', bold=True))
+    click.echo(click.style("Step 2/4: Google Cloud Credentials", fg="cyan", bold=True))
     click.echo("-" * 40)
 
     creds_path = get_google_credentials_path()
@@ -742,7 +762,7 @@ def init():
     else:
         click.echo("  No Google credentials found.")
         click.echo()
-        click.echo(click.style("  Follow these steps to create credentials:", fg='yellow'))
+        click.echo(click.style("  Follow these steps to create credentials:", fg="yellow"))
         click.echo()
         click.echo("  1. Go to: https://console.cloud.google.com")
         click.echo("  2. Create a new project (or select existing)")
@@ -751,7 +771,9 @@ def init():
         click.echo("  5. Click 'Create Credentials' > 'OAuth client ID'")
         click.echo("  6. Select 'Desktop app' as application type")
         click.echo("  7. Download the JSON file")
-        click.echo(f"  8. Save it as: {click.style(str(get_config_dir() / 'credentials.json'), fg='yellow')}")
+        click.echo(
+            f"  8. Save it as: {click.style(str(get_config_dir() / 'credentials.json'), fg='yellow')}"
+        )
         click.echo()
 
         click.pause("  Press Enter once you've saved the credentials file...")
@@ -759,18 +781,18 @@ def init():
         # Check again
         creds_path = get_google_credentials_path()
         if creds_path:
-            click.echo(click.style("  Credentials found!", fg='green'))
+            click.echo(click.style("  Credentials found!", fg="green"))
         else:
-            click.echo(click.style("  Credentials not found yet.", fg='yellow'))
+            click.echo(click.style("  Credentials not found yet.", fg="yellow"))
             click.echo("  You can continue and add them later.")
 
     click.echo()
 
     # Step 3: Google Calendar Authentication
-    click.echo(click.style("Step 3/4: Google Calendar Authentication", fg='cyan', bold=True))
+    click.echo(click.style("Step 3/4: Google Calendar Authentication", fg="cyan", bold=True))
     click.echo("-" * 40)
 
-    token_path = get_config_dir() / 'token.json'
+    token_path = get_config_dir() / "token.json"
     if token_path.exists():
         click.echo("  Already authenticated with Google Calendar.")
         if click.confirm("  Re-authenticate?", default=False):
@@ -785,10 +807,12 @@ def init():
         click.echo()
         try:
             service = get_calendar_service()
-            calendar = service.calendars().get(calendarId='primary').execute()
-            click.echo(click.style(f"  Connected to: {calendar.get('summary', 'Primary')}", fg='green'))
+            calendar = service.calendars().get(calendarId="primary").execute()
+            click.echo(
+                click.style(f"  Connected to: {calendar.get('summary', 'Primary')}", fg="green")
+            )
         except Exception as e:
-            click.echo(click.style(f"  Authentication failed: {str(e)}", fg='red'))
+            click.echo(click.style(f"  Authentication failed: {str(e)}", fg="red"))
             click.echo("  You can try again later with 'claude-meet auth'")
     elif not creds_path:
         click.echo("  Skipping - credentials file needed first.")
@@ -796,26 +820,26 @@ def init():
     click.echo()
 
     # Step 4: Timezone
-    click.echo(click.style("Step 4/4: Timezone Configuration", fg='cyan', bold=True))
+    click.echo(click.style("Step 4/4: Timezone Configuration", fg="cyan", bold=True))
     click.echo("-" * 40)
 
     detected_tz = detect_system_timezone()
-    current_tz = os.getenv('TIMEZONE') or detected_tz
+    current_tz = os.getenv("TIMEZONE") or detected_tz
 
     click.echo(f"  Detected timezone: {click.style(current_tz, fg='yellow')}")
 
     if click.confirm("  Is this correct?", default=True):
         save_timezone(current_tz)
-        click.echo(click.style("  Timezone saved!", fg='green'))
+        click.echo(click.style("  Timezone saved!", fg="green"))
     else:
         click.echo()
         click.echo("  Run 'claude-meet setup' to choose a different timezone.")
 
     # Summary
     click.echo()
-    click.echo(click.style("=" * 60, fg='cyan'))
-    click.echo(click.style("  Setup Complete!", fg='green', bold=True))
-    click.echo(click.style("=" * 60, fg='cyan'))
+    click.echo(click.style("=" * 60, fg="cyan"))
+    click.echo(click.style("  Setup Complete!", fg="green", bold=True))
+    click.echo(click.style("=" * 60, fg="cyan"))
     click.echo()
     click.echo("  Next steps:")
     click.echo("    1. Run 'claude-meet check' to verify everything")
@@ -826,7 +850,7 @@ def init():
     click.echo()
 
 
-@cli.command('mcp-setup')
+@cli.command("mcp-setup")
 def mcp_setup():
     """
     Generate MCP server configuration for Claude Desktop.
@@ -837,7 +861,7 @@ def mcp_setup():
     import json
 
     click.echo()
-    click.echo(click.style("MCP Server Configuration for Claude Desktop", fg='cyan', bold=True))
+    click.echo(click.style("MCP Server Configuration for Claude Desktop", fg="cyan", bold=True))
     click.echo("=" * 55)
     click.echo()
 
@@ -847,10 +871,7 @@ def mcp_setup():
     # Build the config
     mcp_config = {
         "mcpServers": {
-            "calendar-scheduler": {
-                "command": python_path,
-                "args": ["-m", "claude_meet.mcp_server"]
-            }
+            "calendar-scheduler": {"command": python_path, "args": ["-m", "claude_meet.mcp_server"]}
         }
     }
 
@@ -858,25 +879,25 @@ def mcp_setup():
     click.echo()
 
     # Platform-specific path hints
-    if sys.platform == 'win32':
+    if sys.platform == "win32":
         config_path = r"%APPDATA%\Claude\claude_desktop_config.json"
-    elif sys.platform == 'darwin':
+    elif sys.platform == "darwin":
         config_path = "~/Library/Application Support/Claude/claude_desktop_config.json"
     else:
         config_path = "~/.config/Claude/claude_desktop_config.json"
 
     click.echo(f"  Config file location: {click.style(config_path, fg='yellow')}")
     click.echo()
-    click.echo(click.style("Configuration to add:", fg='cyan'))
+    click.echo(click.style("Configuration to add:", fg="cyan"))
     click.echo()
 
     # Pretty print the JSON
     json_str = json.dumps(mcp_config, indent=2)
-    for line in json_str.split('\n'):
+    for line in json_str.split("\n"):
         click.echo(f"  {line}")
 
     click.echo()
-    click.echo(click.style("Instructions:", fg='yellow'))
+    click.echo(click.style("Instructions:", fg="yellow"))
     click.echo("  1. Open or create the config file at the location above")
     click.echo("  2. If file exists, merge the 'mcpServers' section")
     click.echo("  3. If file is empty, paste the entire configuration")
@@ -887,7 +908,7 @@ def mcp_setup():
 
 
 @cli.command()
-@click.option('--count', '-n', default=10, help='Number of events to show')
+@click.option("--count", "-n", default=10, help="Number of events to show")
 def upcoming(count):
     """
     Show upcoming calendar events.
@@ -898,6 +919,7 @@ def upcoming(count):
     user_env = get_env_file_path()
     if user_env.exists():
         from dotenv import load_dotenv as ld
+
         ld(user_env, override=True)
 
     try:
@@ -914,8 +936,8 @@ def upcoming(count):
         click.echo(f"\nUpcoming {len(events)} events:\n")
 
         for event in events:
-            start = event['start'].get('dateTime', event['start'].get('date'))
-            summary = event.get('summary', 'No title')
+            start = event["start"].get("dateTime", event["start"].get("date"))
+            summary = event.get("summary", "No title")
             click.echo(f"  - {summary}")
             click.echo(f"    {start}")
             click.echo()
@@ -964,5 +986,5 @@ def main():
     cli()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

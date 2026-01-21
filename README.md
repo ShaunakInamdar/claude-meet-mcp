@@ -97,13 +97,7 @@ Would you like me to schedule a meeting?
 ### Step 1: Install
 
 ```bash
-# Clone the repo
-git clone https://github.com/ShaunakInamdar/claude-meet-mcp.git
-cd claude-meet-mcp
-
-# Run the installer
-./scripts/install.sh        # macOS/Linux
-.\scripts\install.ps1       # Windows PowerShell
+pip install claude-meet-mcp
 ```
 
 ### Step 2: Setup
@@ -124,6 +118,17 @@ claude-meet chat
 ```
 
 **That's it.** No complex configuration. No YAML files. Just works.
+
+<details>
+<summary>Alternative: Install from source</summary>
+
+```bash
+git clone https://github.com/ShaunakInamdar/claude-meet-mcp.git
+cd claude-meet-mcp
+pip install -e .
+```
+
+</details>
 
 ---
 
