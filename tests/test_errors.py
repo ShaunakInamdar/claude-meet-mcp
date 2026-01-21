@@ -1,16 +1,15 @@
 """Tests for the errors module."""
 
-import pytest
 from claude_meet.errors import (
-    ClaudeMeetError,
     APIKeyNotFoundError,
-    CredentialsNotFoundError,
     AuthenticationError,
-    TokenExpiredError,
     CalendarAPIError,
-    TimezoneError,
+    ClaudeMeetError,
     ConfigurationError,
+    CredentialsNotFoundError,
     SetupIncompleteError,
+    TimezoneError,
+    TokenExpiredError,
 )
 
 

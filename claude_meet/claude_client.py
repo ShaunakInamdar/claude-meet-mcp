@@ -15,7 +15,6 @@ from dateutil import parser
 
 from .scheduler import calculate_end_time, format_slots_as_options
 
-
 # Claude model configuration
 MODEL = "claude-sonnet-4-20250514"
 MAX_TOKENS = 2000
@@ -31,23 +30,23 @@ TOOLS = [
                 "emails": {
                     "type": "array",
                     "items": {"type": "string"},
-                    "description": "Array of email addresses to check (e.g., ['alice@example.com', 'bob@example.com'])"
+                    "description": "Array of email addresses to check (e.g., ['alice@example.com', 'bob@example.com'])",
                 },
                 "date": {
                     "type": "string",
-                    "description": "The date to check in YYYY-MM-DD format (e.g., '2026-01-20')"
+                    "description": "The date to check in YYYY-MM-DD format (e.g., '2026-01-20')",
                 },
                 "start_time": {
                     "type": "string",
-                    "description": "Optional start time in HH:MM 24-hour format (e.g., '09:00'). If not provided, defaults to start of business hours."
+                    "description": "Optional start time in HH:MM 24-hour format (e.g., '09:00'). If not provided, defaults to start of business hours.",
                 },
                 "end_time": {
                     "type": "string",
-                    "description": "Optional end time in HH:MM 24-hour format (e.g., '17:00'). If not provided, defaults to end of business hours."
-                }
+                    "description": "Optional end time in HH:MM 24-hour format (e.g., '17:00'). If not provided, defaults to end of business hours.",
+                },
             },
-            "required": ["emails", "date"]
-        }
+            "required": ["emails", "date"],
+        },
     },
     {
         "name": "find_meeting_times",
@@ -58,15 +57,15 @@ TOOLS = [
                 "emails": {
                     "type": "array",
                     "items": {"type": "string"},
-                    "description": "Email addresses of all meeting attendees"
+                    "description": "Email addresses of all meeting attendees",
                 },
                 "date": {
                     "type": "string",
-                    "description": "Target date for the meeting in YYYY-MM-DD format. Can also accept relative dates like 'tomorrow' which will be parsed."
+                    "description": "Target date for the meeting in YYYY-MM-DD format. Can also accept relative dates like 'tomorrow' which will be parsed.",
                 },
                 "duration_minutes": {
                     "type": "integer",
-                    "description": "How long the meeting should be in minutes (e.g., 30, 60, 90)"
+                    "description": "How long the meeting should be in minutes (e.g., 30, 60, 90)",
                 },
                 "preferences": {
                     "type": "object",
@@ -74,13 +73,19 @@ TOOLS = [
                     "properties": {
                         "prefer_morning": {"type": "boolean"},
                         "prefer_afternoon": {"type": "boolean"},
-                        "start_hour": {"type": "integer", "description": "Business hours start (default 9)"},
-                        "end_hour": {"type": "integer", "description": "Business hours end (default 17)"}
-                    }
-                }
+                        "start_hour": {
+                            "type": "integer",
+                            "description": "Business hours start (default 9)",
+                        },
+                        "end_hour": {
+                            "type": "integer",
+                            "description": "Business hours end (default 17)",
+                        },
+                    },
+                },
             },
-            "required": ["emails", "duration_minutes"]
-        }
+            "required": ["emails", "duration_minutes"],
+        },
     },
     {
         "name": "create_calendar_event",
@@ -90,34 +95,34 @@ TOOLS = [
             "properties": {
                 "summary": {
                     "type": "string",
-                    "description": "The title/subject of the meeting (e.g., 'Q1 Planning Meeting')"
+                    "description": "The title/subject of the meeting (e.g., 'Q1 Planning Meeting')",
                 },
                 "start_time": {
                     "type": "string",
-                    "description": "Meeting start time in ISO 8601 format with timezone (e.g., '2026-01-20T14:00:00-08:00')"
+                    "description": "Meeting start time in ISO 8601 format with timezone (e.g., '2026-01-20T14:00:00-08:00')",
                 },
                 "end_time": {
                     "type": "string",
-                    "description": "Meeting end time in ISO 8601 format with timezone (e.g., '2026-01-20T15:00:00-08:00')"
+                    "description": "Meeting end time in ISO 8601 format with timezone (e.g., '2026-01-20T15:00:00-08:00')",
                 },
                 "attendees": {
                     "type": "array",
                     "items": {"type": "string"},
-                    "description": "List of email addresses to invite to the meeting"
+                    "description": "List of email addresses to invite to the meeting",
                 },
                 "description": {
                     "type": "string",
-                    "description": "Optional detailed description or agenda for the meeting"
+                    "description": "Optional detailed description or agenda for the meeting",
                 },
                 "add_meet_link": {
                     "type": "boolean",
                     "description": "If true, automatically adds a Google Meet video conference link to the event",
-                    "default": False
-                }
+                    "default": False,
+                },
             },
-            "required": ["summary", "start_time", "end_time", "attendees"]
-        }
-    }
+            "required": ["summary", "start_time", "end_time", "attendees"],
+        },
+    },
 ]
 
 # System prompt for Claude
@@ -149,7 +154,7 @@ class ClaudeClient:
     - Extracting final responses
     """
 
-    def __init__(self, api_key: str, calendar_client, timezone: str = 'Europe/Berlin'):
+    def __init__(self, api_key: str, calendar_client, timezone: str = "Europe/Berlin"):
         """
         Initialize the Claude client.
 
@@ -164,9 +169,7 @@ class ClaudeClient:
         self.tz = pytz.timezone(timezone)
 
     def process_message(
-        self,
-        user_message: str,
-        conversation_history: Optional[list] = None
+        self, user_message: str, conversation_history: Optional[list] = None
     ) -> tuple:
         """
         Process a user message through Claude with tool calling support.
@@ -188,23 +191,16 @@ class ClaudeClient:
             conversation_history = []
 
         # Build messages list
-        messages = conversation_history + [{
-            "role": "user",
-            "content": user_message
-        }]
+        messages = conversation_history + [{"role": "user", "content": user_message}]
 
         # Get today's date for the system prompt
-        today = datetime.now(self.tz).strftime('%A, %B %d, %Y')
+        today = datetime.now(self.tz).strftime("%A, %B %d, %Y")
         system = SYSTEM_PROMPT.format(today=today)
 
         # Initial API call
         try:
             response = self.client.messages.create(
-                model=MODEL,
-                max_tokens=MAX_TOKENS,
-                system=system,
-                tools=TOOLS,
-                messages=messages
+                model=MODEL, max_tokens=MAX_TOKENS, system=system, tools=TOOLS, messages=messages
             )
         except anthropic.APIError as e:
             return self._handle_claude_error(e), messages
@@ -219,18 +215,22 @@ class ClaudeClient:
             for tool_use in tool_uses:
                 try:
                     result = self.execute_tool(tool_use.name, tool_use.input)
-                    tool_results.append({
-                        "type": "tool_result",
-                        "tool_use_id": tool_use.id,
-                        "content": json.dumps(result, default=str)
-                    })
+                    tool_results.append(
+                        {
+                            "type": "tool_result",
+                            "tool_use_id": tool_use.id,
+                            "content": json.dumps(result, default=str),
+                        }
+                    )
                 except Exception as e:
-                    tool_results.append({
-                        "type": "tool_result",
-                        "tool_use_id": tool_use.id,
-                        "content": json.dumps({"error": str(e)}),
-                        "is_error": True
-                    })
+                    tool_results.append(
+                        {
+                            "type": "tool_result",
+                            "tool_use_id": tool_use.id,
+                            "content": json.dumps({"error": str(e)}),
+                            "is_error": True,
+                        }
+                    )
 
             # Add assistant response and tool results to conversation
             messages.append({"role": "assistant", "content": response.content})
@@ -243,7 +243,7 @@ class ClaudeClient:
                     max_tokens=MAX_TOKENS,
                     system=system,
                     tools=TOOLS,
-                    messages=messages
+                    messages=messages,
                 )
             except anthropic.APIError as e:
                 return self._handle_claude_error(e), messages
@@ -310,10 +310,7 @@ class ClaudeClient:
             else:
                 formatted[email] = ["Free all day"]
 
-        return {
-            "date": date,
-            "availability": formatted
-        }
+        return {"date": date, "availability": formatted}
 
     def _execute_find_meeting_times(self, tool_input: dict) -> dict:
         """Execute the find_meeting_times tool."""
@@ -324,7 +321,7 @@ class ClaudeClient:
         if not date:
             # Default to tomorrow if no date provided
             tomorrow = datetime.now(self.tz) + timedelta(days=1)
-            date = tomorrow.strftime('%Y-%m-%d')
+            date = tomorrow.strftime("%Y-%m-%d")
 
         preferences = tool_input.get("preferences", {})
         start_hour = preferences.get("start_hour", 9)
@@ -336,32 +333,34 @@ class ClaudeClient:
             duration_minutes=duration,
             start_hour=start_hour,
             end_hour=end_hour,
-            preferences=preferences
+            preferences=preferences,
         )
 
         if not slots:
             return {
                 "date": date,
                 "available_slots": [],
-                "message": "No available time slots found for this date. Try another day."
+                "message": "No available time slots found for this date. Try another day.",
             }
 
         # Format the results
         formatted_slots = []
         for slot in slots[:5]:  # Return top 5 options
-            formatted_slots.append({
-                "start": slot["start"],
-                "end": slot["end"],
-                "display": slot["display"],
-                "score": slot["score"],
-                "recommended": slot["score"] >= 55
-            })
+            formatted_slots.append(
+                {
+                    "start": slot["start"],
+                    "end": slot["end"],
+                    "display": slot["display"],
+                    "score": slot["score"],
+                    "recommended": slot["score"] >= 55,
+                }
+            )
 
         return {
             "date": date,
             "duration_minutes": duration,
             "available_slots": formatted_slots,
-            "options_text": format_slots_as_options(slots, self.timezone)
+            "options_text": format_slots_as_options(slots, self.timezone),
         }
 
     def _execute_create_event(self, tool_input: dict) -> dict:
@@ -383,7 +382,7 @@ class ClaudeClient:
             end_time=end_time,
             attendees=attendees,
             description=description,
-            add_meet_link=add_meet_link
+            add_meet_link=add_meet_link,
         )
 
         return {
@@ -395,7 +394,7 @@ class ClaudeClient:
             "attendees": result["attendees"],
             "calendar_link": result["html_link"],
             "meet_link": result.get("meet_link"),
-            "message": f"Meeting '{summary}' created successfully! Invitations sent to {len(attendees)} attendee(s)."
+            "message": f"Meeting '{summary}' created successfully! Invitations sent to {len(attendees)} attendee(s).",
         }
 
     def _parse_date(self, date_str: Optional[str]) -> Optional[str]:
@@ -411,25 +410,33 @@ class ClaudeClient:
         today = datetime.now(self.tz).date()
 
         # Handle relative dates
-        if date_str in ['today', 'now']:
-            return today.strftime('%Y-%m-%d')
-        elif date_str == 'tomorrow':
-            return (today + timedelta(days=1)).strftime('%Y-%m-%d')
-        elif date_str == 'next week':
-            return (today + timedelta(days=7)).strftime('%Y-%m-%d')
-        elif date_str in ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']:
+        if date_str in ["today", "now"]:
+            return today.strftime("%Y-%m-%d")
+        elif date_str == "tomorrow":
+            return (today + timedelta(days=1)).strftime("%Y-%m-%d")
+        elif date_str == "next week":
+            return (today + timedelta(days=7)).strftime("%Y-%m-%d")
+        elif date_str in [
+            "monday",
+            "tuesday",
+            "wednesday",
+            "thursday",
+            "friday",
+            "saturday",
+            "sunday",
+        ]:
             return self._next_weekday(today, date_str)
 
         # Try parsing as actual date
         try:
             parsed = parser.parse(date_str)
-            return parsed.strftime('%Y-%m-%d')
+            return parsed.strftime("%Y-%m-%d")
         except Exception:
             return None
 
     def _next_weekday(self, from_date, weekday_name: str) -> str:
         """Get the next occurrence of a weekday."""
-        weekdays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+        weekdays = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
         target_day = weekdays.index(weekday_name.lower())
         days_ahead = target_day - from_date.weekday()
 
@@ -437,20 +444,20 @@ class ClaudeClient:
             days_ahead += 7
 
         next_date = from_date + timedelta(days=days_ahead)
-        return next_date.strftime('%Y-%m-%d')
+        return next_date.strftime("%Y-%m-%d")
 
     def _get_tz_offset(self, date: str) -> str:
         """Get timezone offset string for a given date."""
-        dt = datetime.strptime(date, '%Y-%m-%d')
+        dt = datetime.strptime(date, "%Y-%m-%d")
         localized = self.tz.localize(dt)
-        offset = localized.strftime('%z')
+        offset = localized.strftime("%z")
         return f"{offset[:3]}:{offset[3:]}"
 
     def _format_time(self, iso_time: str) -> str:
         """Format ISO time to readable format."""
         try:
             dt = parser.parse(iso_time).astimezone(self.tz)
-            return dt.strftime('%I:%M %p')
+            return dt.strftime("%I:%M %p")
         except Exception:
             return iso_time
 

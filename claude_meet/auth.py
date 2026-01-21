@@ -4,17 +4,15 @@ OAuth2 authentication handler for Google Calendar API.
 Handles the OAuth flow, token storage, and token refresh for Google Calendar access.
 """
 
-import os
 from pathlib import Path
 
+from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
-from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
 
-
 # Google Calendar API scope - full read/write access to calendars
-SCOPES = ['https://www.googleapis.com/auth/calendar']
+SCOPES = ["https://www.googleapis.com/auth/calendar"]
 
 
 def get_config_dir() -> Path:
@@ -24,7 +22,7 @@ def get_config_dir() -> Path:
     Returns:
         Path: Path to ~/.claude-meet/ directory
     """
-    config_dir = Path.home() / '.claude-meet'
+    config_dir = Path.home() / ".claude-meet"
     config_dir.mkdir(exist_ok=True)
     return config_dir
 
@@ -45,14 +43,14 @@ def get_credentials_path() -> Path:
     config_dir = get_config_dir()
 
     # Check standard location first
-    standard_path = config_dir / 'credentials.json'
+    standard_path = config_dir / "credentials.json"
     if standard_path.exists():
         return standard_path
 
     # Check project config directory for client_secret files
-    project_config = Path(__file__).parent.parent / 'config'
+    project_config = Path(__file__).parent.parent / "config"
     if project_config.exists():
-        client_secrets = list(project_config.glob('client_secret*.json'))
+        client_secrets = list(project_config.glob("client_secret*.json"))
         if client_secrets:
             return client_secrets[0]
 
@@ -71,7 +69,7 @@ def get_token_path() -> Path:
     Returns:
         Path: Path to token.json file
     """
-    return get_config_dir() / 'token.json'
+    return get_config_dir() / "token.json"
 
 
 def get_calendar_credentials() -> Credentials:
@@ -114,15 +112,12 @@ def get_calendar_credentials() -> Credentials:
         if not creds:
             # Run OAuth consent flow
             credentials_path = get_credentials_path()
-            flow = InstalledAppFlow.from_client_secrets_file(
-                str(credentials_path),
-                SCOPES
-            )
+            flow = InstalledAppFlow.from_client_secrets_file(str(credentials_path), SCOPES)
             creds = flow.run_local_server(port=0)
 
         # Save the credentials for future use
         token_path.parent.mkdir(parents=True, exist_ok=True)
-        with open(token_path, 'w') as token_file:
+        with open(token_path, "w") as token_file:
             token_file.write(creds.to_json())
 
     return creds
@@ -142,7 +137,7 @@ def get_calendar_service():
         events = service.events().list(calendarId='primary').execute()
     """
     creds = get_calendar_credentials()
-    return build('calendar', 'v3', credentials=creds)
+    return build("calendar", "v3", credentials=creds)
 
 
 def clear_credentials():

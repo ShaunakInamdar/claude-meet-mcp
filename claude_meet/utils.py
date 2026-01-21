@@ -10,13 +10,9 @@ from typing import Optional
 
 import pytz
 from dateutil import parser
-from dateutil.relativedelta import relativedelta
 
 
-def parse_relative_date(
-    date_str: str,
-    timezone: str = 'Europe/Berlin'
-) -> Optional[str]:
+def parse_relative_date(date_str: str, timezone: str = "Europe/Berlin") -> Optional[str]:
     """
     Parse relative dates like 'tomorrow', 'next week', 'friday' to YYYY-MM-DD.
 
@@ -44,70 +40,70 @@ def parse_relative_date(
     date_str = date_str.lower().strip()
 
     # Today / now
-    if date_str in ['today', 'now']:
-        return today.strftime('%Y-%m-%d')
+    if date_str in ["today", "now"]:
+        return today.strftime("%Y-%m-%d")
 
     # Tomorrow
-    if date_str == 'tomorrow':
-        return (today + timedelta(days=1)).strftime('%Y-%m-%d')
+    if date_str == "tomorrow":
+        return (today + timedelta(days=1)).strftime("%Y-%m-%d")
 
     # Yesterday (for checking past events)
-    if date_str == 'yesterday':
-        return (today - timedelta(days=1)).strftime('%Y-%m-%d')
+    if date_str == "yesterday":
+        return (today - timedelta(days=1)).strftime("%Y-%m-%d")
 
     # Next week
-    if date_str == 'next week':
-        return (today + timedelta(days=7)).strftime('%Y-%m-%d')
+    if date_str == "next week":
+        return (today + timedelta(days=7)).strftime("%Y-%m-%d")
 
     # This week
-    if date_str == 'this week':
-        return today.strftime('%Y-%m-%d')
+    if date_str == "this week":
+        return today.strftime("%Y-%m-%d")
 
     # End of week
-    if date_str == 'end of week' or date_str == 'friday':
+    if date_str == "end of week" or date_str == "friday":
         days_until_friday = (4 - today.weekday()) % 7
-        if days_until_friday == 0 and date_str == 'friday':
+        if days_until_friday == 0 and date_str == "friday":
             days_until_friday = 7  # Next Friday if today is Friday
-        return (today + timedelta(days=days_until_friday)).strftime('%Y-%m-%d')
+        return (today + timedelta(days=days_until_friday)).strftime("%Y-%m-%d")
 
     # Day names (get next occurrence)
-    weekdays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+    weekdays = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
     for i, day in enumerate(weekdays):
         if date_str == day:
             days_ahead = i - today.weekday()
             if days_ahead <= 0:
                 days_ahead += 7
-            return (today + timedelta(days=days_ahead)).strftime('%Y-%m-%d')
+            return (today + timedelta(days=days_ahead)).strftime("%Y-%m-%d")
 
         # "next monday", "next tuesday", etc.
-        if date_str == f'next {day}':
+        if date_str == f"next {day}":
             days_ahead = i - today.weekday()
             if days_ahead <= 0:
                 days_ahead += 7
-            return (today + timedelta(days=days_ahead)).strftime('%Y-%m-%d')
+            return (today + timedelta(days=days_ahead)).strftime("%Y-%m-%d")
 
     # "in X days"
-    if date_str.startswith('in ') and 'day' in date_str:
+    if date_str.startswith("in ") and "day" in date_str:
         try:
             parts = date_str.split()
             num_days = int(parts[1])
-            return (today + timedelta(days=num_days)).strftime('%Y-%m-%d')
+            return (today + timedelta(days=num_days)).strftime("%Y-%m-%d")
         except (ValueError, IndexError):
             pass
 
     # "in X weeks"
-    if date_str.startswith('in ') and 'week' in date_str:
+    if date_str.startswith("in ") and "week" in date_str:
         try:
             parts = date_str.split()
             num_weeks = int(parts[1])
-            return (today + timedelta(weeks=num_weeks)).strftime('%Y-%m-%d')
+            return (today + timedelta(weeks=num_weeks)).strftime("%Y-%m-%d")
         except (ValueError, IndexError):
             pass
 
     # Try parsing as actual date with dateutil
     try:
         parsed = parser.parse(date_str, fuzzy=True)
-        return parsed.strftime('%Y-%m-%d')
+        return parsed.strftime("%Y-%m-%d")
     except (ValueError, TypeError):
         pass
 
@@ -115,9 +111,7 @@ def parse_relative_date(
 
 
 def format_datetime_for_display(
-    dt_str: str,
-    timezone: str = 'Europe/Berlin',
-    include_date: bool = True
+    dt_str: str, timezone: str = "Europe/Berlin", include_date: bool = True
 ) -> str:
     """
     Convert ISO datetime string to human-readable format.
@@ -140,18 +134,14 @@ def format_datetime_for_display(
         dt_local = dt.astimezone(tz)
 
         if include_date:
-            return dt_local.strftime('%A, %B %d at %I:%M %p %Z')
+            return dt_local.strftime("%A, %B %d at %I:%M %p %Z")
         else:
-            return dt_local.strftime('%I:%M %p %Z')
+            return dt_local.strftime("%I:%M %p %Z")
     except Exception:
         return dt_str
 
 
-def create_iso_datetime(
-    date_str: str,
-    time_str: str,
-    timezone: str = 'Europe/Berlin'
-) -> str:
+def create_iso_datetime(date_str: str, time_str: str, timezone: str = "Europe/Berlin") -> str:
     """
     Create ISO format datetime from date and time strings.
 
@@ -168,7 +158,7 @@ def create_iso_datetime(
         '2026-01-20T14:00:00-08:00'
     """
     tz = pytz.timezone(timezone)
-    dt_naive = datetime.strptime(f"{date_str} {time_str}", '%Y-%m-%d %H:%M')
+    dt_naive = datetime.strptime(f"{date_str} {time_str}", "%Y-%m-%d %H:%M")
     dt_aware = tz.localize(dt_naive)
     return dt_aware.isoformat()
 
@@ -194,29 +184,26 @@ def parse_time_string(time_str: str) -> Optional[str]:
     time_str = time_str.lower().strip()
 
     # Handle special keywords
-    if time_str == 'morning':
-        return '09:00'
-    if time_str == 'noon':
-        return '12:00'
-    if time_str == 'afternoon':
-        return '14:00'
-    if time_str == 'evening':
-        return '18:00'
+    if time_str == "morning":
+        return "09:00"
+    if time_str == "noon":
+        return "12:00"
+    if time_str == "afternoon":
+        return "14:00"
+    if time_str == "evening":
+        return "18:00"
 
     try:
         # Use dateutil to parse
         parsed = parser.parse(time_str)
-        return parsed.strftime('%H:%M')
+        return parsed.strftime("%H:%M")
     except (ValueError, TypeError):
         pass
 
     return None
 
 
-def get_timezone_offset(
-    date_str: str,
-    timezone: str = 'Europe/Berlin'
-) -> str:
+def get_timezone_offset(date_str: str, timezone: str = "Europe/Berlin") -> str:
     """
     Get the timezone offset for a specific date.
 
@@ -230,9 +217,9 @@ def get_timezone_offset(
         str: Offset like '-08:00' or '-07:00'
     """
     tz = pytz.timezone(timezone)
-    dt = datetime.strptime(date_str, '%Y-%m-%d')
+    dt = datetime.strptime(date_str, "%Y-%m-%d")
     localized = tz.localize(dt)
-    offset = localized.strftime('%z')
+    offset = localized.strftime("%z")
     # Format as -08:00 instead of -0800
     return f"{offset[:3]}:{offset[3:]}"
 
@@ -258,7 +245,7 @@ def duration_to_minutes(duration_str: str) -> Optional[int]:
     duration_str = duration_str.lower().strip()
 
     # Remove common words
-    duration_str = duration_str.replace('about', '').replace('around', '').strip()
+    duration_str = duration_str.replace("about", "").replace("around", "").strip()
 
     try:
         # Pure number - assume minutes
@@ -266,16 +253,16 @@ def duration_to_minutes(duration_str: str) -> Optional[int]:
             return int(duration_str)
 
         # Hours
-        if 'hour' in duration_str or 'hr' in duration_str or duration_str.endswith('h'):
+        if "hour" in duration_str or "hr" in duration_str or duration_str.endswith("h"):
             # Extract number
-            num_str = ''.join(c for c in duration_str if c.isdigit() or c == '.')
+            num_str = "".join(c for c in duration_str if c.isdigit() or c == ".")
             if num_str:
                 hours = float(num_str)
                 return int(hours * 60)
 
         # Minutes
-        if 'min' in duration_str or duration_str.endswith('m'):
-            num_str = ''.join(c for c in duration_str if c.isdigit())
+        if "min" in duration_str or duration_str.endswith("m"):
+            num_str = "".join(c for c in duration_str if c.isdigit())
             if num_str:
                 return int(num_str)
 
@@ -295,10 +282,10 @@ def validate_email(email: str) -> bool:
     Returns:
         bool: True if email appears valid
     """
-    if not email or '@' not in email:
+    if not email or "@" not in email:
         return False
 
-    parts = email.split('@')
+    parts = email.split("@")
     if len(parts) != 2:
         return False
 
@@ -306,7 +293,7 @@ def validate_email(email: str) -> bool:
     if not local or not domain:
         return False
 
-    if '.' not in domain:
+    if "." not in domain:
         return False
 
     return True

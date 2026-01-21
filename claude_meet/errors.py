@@ -5,7 +5,6 @@ Provides actionable error messages with fix suggestions to guide users
 through common setup and configuration issues.
 """
 
-import sys
 from typing import Optional
 
 
@@ -41,7 +40,7 @@ class APIKeyNotFoundError(ClaudeMeetError):
        claude-meet config set ANTHROPIC_API_KEY=sk-ant-...
 
      Option C - Config file:
-       echo "sk-ant-..." > ~/.claude-meet/anthropic_apikey.txt"""
+       echo "sk-ant-..." > ~/.claude-meet/anthropic_apikey.txt""",
         )
 
 
@@ -59,7 +58,7 @@ class CredentialsNotFoundError(ClaudeMeetError):
   5. Download the credentials JSON file
   6. Place it at: ~/.claude-meet/credentials.json
 
-  Or run 'claude-meet init' for step-by-step guidance."""
+  Or run 'claude-meet init' for step-by-step guidance.""",
         )
 
 
@@ -77,7 +76,7 @@ class AuthenticationError(ClaudeMeetError):
   If the issue persists:
   - Check that your credentials.json file is valid
   - Ensure you've enabled the Google Calendar API
-  - Try regenerating your OAuth credentials"""
+  - Try regenerating your OAuth credentials""",
         )
 
 
@@ -88,7 +87,7 @@ class TokenExpiredError(ClaudeMeetError):
         super().__init__(
             message="Google Calendar authentication token expired.",
             fix_suggestion="""To fix this:
-  Run 'claude-meet auth' to re-authenticate with Google Calendar."""
+  Run 'claude-meet auth' to re-authenticate with Google Calendar.""",
         )
 
 
@@ -130,7 +129,7 @@ class TimezoneError(ClaudeMeetError):
     - Europe/Berlin
     - America/New_York
     - Asia/Tokyo
-    - UTC"""
+    - UTC""",
         )
 
 
@@ -142,7 +141,7 @@ class ConfigurationError(ClaudeMeetError):
             message=f"Configuration error for {key}: {issue}",
             fix_suggestion=f"""To fix this:
   Run 'claude-meet config set {key}=<value>' to set the correct value.
-  Run 'claude-meet config list' to see current configuration."""
+  Run 'claude-meet config list' to see current configuration.""",
         )
 
 
@@ -158,7 +157,7 @@ class SetupIncompleteError(ClaudeMeetError):
 
   1. Set up Google Cloud credentials (see docs/SETUP.md)
   2. Run 'claude-meet auth' to authenticate
-  3. Run 'claude-meet setup' to configure timezone"""
+  3. Run 'claude-meet setup' to configure timezone""",
         )
 
 
@@ -174,18 +173,19 @@ def print_error(error: Exception, debug: bool = False) -> None:
 
     click.echo()
     if isinstance(error, ClaudeMeetError):
-        click.echo(click.style("Error: ", fg='red', bold=True) + error.message)
+        click.echo(click.style("Error: ", fg="red", bold=True) + error.message)
         if error.fix_suggestion:
             click.echo()
-            click.echo(click.style("How to fix:", fg='yellow'))
+            click.echo(click.style("How to fix:", fg="yellow"))
             click.echo(error.fix_suggestion)
     else:
-        click.echo(click.style(f"Error: {str(error)}", fg='red'))
+        click.echo(click.style(f"Error: {str(error)}", fg="red"))
 
     if debug:
         click.echo()
-        click.echo(click.style("Debug traceback:", fg='cyan'))
+        click.echo(click.style("Debug traceback:", fg="cyan"))
         import traceback
+
         traceback.print_exc()
 
     click.echo()
