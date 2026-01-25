@@ -6,13 +6,12 @@ and datetime formatting.
 """
 
 from datetime import datetime, timedelta
-from typing import Optional
 
 import pytz
 from dateutil import parser
 
 
-def parse_relative_date(date_str: str, timezone: str = "Europe/Berlin") -> Optional[str]:
+def parse_relative_date(date_str: str, timezone: str = "Europe/Berlin") -> str | None:
     """
     Parse relative dates like 'tomorrow', 'next week', 'friday' to YYYY-MM-DD.
 
@@ -163,7 +162,7 @@ def create_iso_datetime(date_str: str, time_str: str, timezone: str = "Europe/Be
     return dt_aware.isoformat()
 
 
-def parse_time_string(time_str: str) -> Optional[str]:
+def parse_time_string(time_str: str) -> str | None:
     """
     Parse various time formats to HH:MM (24-hour).
 
@@ -224,7 +223,7 @@ def get_timezone_offset(date_str: str, timezone: str = "Europe/Berlin") -> str:
     return f"{offset[:3]}:{offset[3:]}"
 
 
-def duration_to_minutes(duration_str: str) -> Optional[int]:
+def duration_to_minutes(duration_str: str) -> int | None:
     """
     Parse duration strings to minutes.
 

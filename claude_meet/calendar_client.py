@@ -7,7 +7,6 @@ availability checking, and finding free time slots.
 
 import uuid
 from datetime import datetime, timedelta
-from typing import Optional
 
 import pytz
 from dateutil import parser
@@ -42,7 +41,7 @@ class CalendarClient:
         start_time: str,
         end_time: str,
         attendees: list,
-        description: Optional[str] = None,
+        description: str | None = None,
         add_meet_link: bool = False,
     ) -> dict:
         """
@@ -162,7 +161,7 @@ class CalendarClient:
         duration_minutes: int,
         start_hour: int = 9,
         end_hour: int = 17,
-        preferences: Optional[dict] = None,
+        preferences: dict | None = None,
     ) -> list:
         """
         Find available meeting time slots for all attendees.
@@ -328,7 +327,7 @@ class CalendarClient:
         except Exception:
             return 0
 
-    def _score_time_slot(self, start_time_iso: str, preferences: Optional[dict] = None) -> int:
+    def _score_time_slot(self, start_time_iso: str, preferences: dict | None = None) -> int:
         """
         Score a time slot based on scheduling preferences.
 

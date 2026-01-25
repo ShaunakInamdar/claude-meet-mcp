@@ -7,7 +7,6 @@ operations through a tool-calling interface.
 
 import json
 from datetime import datetime, timedelta
-from typing import Optional
 
 import anthropic
 import pytz
@@ -168,9 +167,7 @@ class ClaudeClient:
         self.timezone = timezone
         self.tz = pytz.timezone(timezone)
 
-    def process_message(
-        self, user_message: str, conversation_history: Optional[list] = None
-    ) -> tuple:
+    def process_message(self, user_message: str, conversation_history: list | None = None) -> tuple:
         """
         Process a user message through Claude with tool calling support.
 
@@ -397,7 +394,7 @@ class ClaudeClient:
             "message": f"Meeting '{summary}' created successfully! Invitations sent to {len(attendees)} attendee(s).",
         }
 
-    def _parse_date(self, date_str: Optional[str]) -> Optional[str]:
+    def _parse_date(self, date_str: str | None) -> str | None:
         """
         Parse a date string to YYYY-MM-DD format.
 
