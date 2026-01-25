@@ -5,13 +5,12 @@ Provides actionable error messages with fix suggestions to guide users
 through common setup and configuration issues.
 """
 
-from typing import Optional
 
 
 class ClaudeMeetError(Exception):
     """Base exception for Claude Calendar Scheduler."""
 
-    def __init__(self, message: str, fix_suggestion: Optional[str] = None):
+    def __init__(self, message: str, fix_suggestion: str | None = None):
         self.message = message
         self.fix_suggestion = fix_suggestion
         super().__init__(self.format_message())

@@ -25,14 +25,15 @@ if sys.platform == "win32":
 # Suppress Google API deprecation warnings that can interfere with MCP stdio protocol
 warnings.filterwarnings("ignore", category=FutureWarning, module="google.api_core")
 
-from dotenv import load_dotenv
-from mcp.server import Server
-from mcp.server.stdio import stdio_server
-from mcp.types import TextContent, Tool
+# These imports must come after the Windows encoding fix and warning suppression above
+from dotenv import load_dotenv  # noqa: E402
+from mcp.server import Server  # noqa: E402
+from mcp.server.stdio import stdio_server  # noqa: E402
+from mcp.types import TextContent, Tool  # noqa: E402
 
-from .auth import get_calendar_service
-from .calendar_client import CalendarClient
-from .config import Config, get_env_file_path
+from .auth import get_calendar_service  # noqa: E402
+from .calendar_client import CalendarClient  # noqa: E402
+from .config import Config, get_env_file_path  # noqa: E402
 
 # Load environment variables (project .env first, then user config)
 load_dotenv()

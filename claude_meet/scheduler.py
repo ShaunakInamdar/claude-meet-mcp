@@ -6,7 +6,6 @@ and finding mutual free times for multiple attendees.
 """
 
 from datetime import timedelta
-from typing import Optional
 
 import pytz
 from dateutil import parser
@@ -158,7 +157,7 @@ def time_diff_minutes(start: str, end: str) -> int:
         return 0
 
 
-def score_time_slot(slot_start: str, preferences: Optional[dict] = None) -> int:
+def score_time_slot(slot_start: str, preferences: dict | None = None) -> int:
     """
     Score a time slot based on scheduling preferences.
 

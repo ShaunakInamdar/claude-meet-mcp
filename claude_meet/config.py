@@ -6,7 +6,6 @@ Handles application settings, paths, and user preferences.
 
 import os
 from pathlib import Path
-from typing import Optional
 
 
 def detect_system_timezone() -> str:
@@ -152,7 +151,7 @@ def get_project_config_dir() -> Path:
     return Path(__file__).parent.parent / "config"
 
 
-def load_api_key_from_file(filename: str = "anthropic_apikey.txt") -> Optional[str]:
+def load_api_key_from_file(filename: str = "anthropic_apikey.txt") -> str | None:
     """
     Load API key from a file in the config directory.
 
@@ -260,7 +259,7 @@ def get_common_timezones() -> list:
     ]
 
 
-def get_google_credentials_path() -> Optional[Path]:
+def get_google_credentials_path() -> Path | None:
     """
     Find the Google OAuth credentials file.
 
@@ -302,7 +301,7 @@ CONFIG_KEYS = {
 }
 
 
-def get_config_value(key: str) -> Optional[str]:
+def get_config_value(key: str) -> str | None:
     """
     Get a configuration value.
 
