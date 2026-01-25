@@ -6,7 +6,6 @@ through common setup and configuration issues.
 """
 
 
-
 class ClaudeMeetError(Exception):
     """Base exception for Claude Calendar Scheduler."""
 

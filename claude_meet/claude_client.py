@@ -167,9 +167,7 @@ class ClaudeClient:
         self.timezone = timezone
         self.tz = pytz.timezone(timezone)
 
-    def process_message(
-        self, user_message: str, conversation_history: list | None = None
-    ) -> tuple:
+    def process_message(self, user_message: str, conversation_history: list | None = None) -> tuple:
         """
         Process a user message through Claude with tool calling support.
 
