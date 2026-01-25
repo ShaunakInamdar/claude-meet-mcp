@@ -11,15 +11,19 @@ import asyncio
 import json
 import os
 import sys
+import warnings
 from datetime import datetime, timedelta
 from typing import Any
 
-# Fix Windows console encoding
+# Fix Windows console encoding BEFORE any imports that might write to stderr
 if sys.platform == "win32":
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     if hasattr(sys.stderr, "reconfigure"):
         sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
+# Suppress Google API deprecation warnings that can interfere with MCP stdio protocol
+warnings.filterwarnings("ignore", category=FutureWarning, module="google.api_core")
 
 from dotenv import load_dotenv
 from mcp.server import Server
