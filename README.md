@@ -1,6 +1,8 @@
 # Claude Meet MCP
 
-**Stop playing email tennis. Let AI schedule your meetings in seconds.**
+**"Schedule a meeting with everyone" → invites sent. That's it.**
+
+*Stop playing email tennis. Let AI schedule your meetings in seconds.*
 
 [![PyPI version](https://img.shields.io/pypi/v/claude-meet-mcp.svg)](https://pypi.org/project/claude-meet-mcp/)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
@@ -88,7 +90,7 @@ Claude: I checked Sarah's calendar for next Tuesday. She's available:
 Would you like me to schedule a meeting?
 ```
 
-<!-- TODO: Add GIF demos and video tutorial -->
+![Claude Meet Demo](assets/ClaudeMeetFluiddemo.gif)
 
 ---
 

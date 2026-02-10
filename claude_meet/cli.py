@@ -19,7 +19,7 @@ if sys.platform == "win32":
 import click
 from dotenv import load_dotenv
 
-from .auth import clear_credentials, get_calendar_service
+from .auth import clear_credentials, get_calendar_service, has_bundled_credentials
 from .calendar_client import CalendarClient
 from .claude_client import ClaudeClient
 from .config import (
@@ -477,6 +477,8 @@ def config_show():
     creds_path = get_google_credentials_path()
     if creds_path:
         creds_status = click.style("Found", fg="green")
+    elif has_bundled_credentials():
+        creds_status = click.style("Bundled", fg="green")
     else:
         creds_status = click.style("Not found", fg="red")
     click.echo(f"  Google creds:    {creds_status}")
@@ -657,6 +659,8 @@ def check():
             click.echo(click.style("  [X]  ", fg="red") + "Credentials file format: Invalid JSON")
             all_ok = False
             issues.append("credentials.json is not valid JSON")
+    elif has_bundled_credentials():
+        click.echo(click.style("  [OK] ", fg="green") + "Google credentials: Bundled with package")
     else:
         click.echo(click.style("  [X]  ", fg="red") + "Google credentials: Not found")
         all_ok = False
@@ -753,12 +757,14 @@ def init():
     click.echo()
 
     # Step 2: Google Cloud Credentials
-    click.echo(click.style("Step 2/4: Google Cloud Credentials", fg="cyan", bold=True))
+    click.echo(click.style("Step 2/4: Google Calendar Credentials", fg="cyan", bold=True))
     click.echo("-" * 40)
 
     creds_path = get_google_credentials_path()
     if creds_path:
         click.echo(f"  Credentials found: {click.style(str(creds_path), fg='green')}")
+    elif has_bundled_credentials():
+        click.echo(click.style("  Credentials are bundled with the app.", fg="green"))
     else:
         click.echo("  No Google credentials found.")
         click.echo()

@@ -4,6 +4,8 @@ OAuth2 authentication handler for Google Calendar API.
 Handles the OAuth flow, token storage, and token refresh for Google Calendar access.
 """
 
+import json
+from importlib.resources import files as _resource_files
 from pathlib import Path
 
 from google.auth.transport.requests import Request
@@ -27,38 +29,50 @@ def get_config_dir() -> Path:
     return config_dir
 
 
-def get_credentials_path() -> Path:
+def _load_bundled_credentials() -> dict | None:
+    """Load OAuth client credentials bundled with the package.
+
+    Returns None if the bundled file is missing or still contains placeholder values.
     """
-    Get the path to the OAuth client credentials file.
+    try:
+        content = _resource_files("claude_meet").joinpath("_bundled_credentials.json").read_text()
+        config = json.loads(content)
+        client_id = config.get("installed", {}).get("client_id", "")
+        if client_id and "YOUR_CLIENT_ID" not in client_id:
+            return config
+    except Exception:
+        pass
+    return None
 
-    First checks for credentials.json in the config directory,
-    then falls back to looking for client_secret*.json files.
 
-    Returns:
-        Path: Path to the credentials file
+def has_bundled_credentials() -> bool:
+    """Check whether valid credentials are bundled with the package."""
+    return _load_bundled_credentials() is not None
+
+
+def _get_client_config() -> dict:
+    """Get OAuth client configuration.
+
+    Priority:
+        1. User-provided credentials in ~/.claude-meet/credentials.json (allows override)
+        2. Credentials bundled with the package
 
     Raises:
-        FileNotFoundError: If no credentials file is found
+        FileNotFoundError: If no valid credentials are available from either source.
     """
-    config_dir = get_config_dir()
+    user_creds = get_config_dir() / "credentials.json"
+    if user_creds.exists():
+        with open(user_creds) as f:
+            return json.load(f)
 
-    # Check standard location first
-    standard_path = config_dir / "credentials.json"
-    if standard_path.exists():
-        return standard_path
-
-    # Check project config directory for client_secret files
-    project_config = Path(__file__).parent.parent / "config"
-    if project_config.exists():
-        client_secrets = list(project_config.glob("client_secret*.json"))
-        if client_secrets:
-            return client_secrets[0]
+    bundled = _load_bundled_credentials()
+    if bundled:
+        return bundled
 
     raise FileNotFoundError(
-        f"Google OAuth credentials not found. "
-        f"Please download OAuth credentials from Google Cloud Console and save to:\n"
-        f"  {standard_path}\n"
-        f"Or place client_secret*.json in the config/ directory."
+        "Google OAuth credentials not found. "
+        "Run 'claude-meet init' for setup help, or place a credentials.json in "
+        f"{get_config_dir()}/"
     )
 
 
@@ -111,8 +125,8 @@ def get_calendar_credentials() -> Credentials:
 
         if not creds:
             # Run OAuth consent flow
-            credentials_path = get_credentials_path()
-            flow = InstalledAppFlow.from_client_secrets_file(str(credentials_path), SCOPES)
+            client_config = _get_client_config()
+            flow = InstalledAppFlow.from_client_config(client_config, SCOPES)
             creds = flow.run_local_server(port=0)
 
         # Save the credentials for future use
